@@ -8,6 +8,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W265SV9J0L"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      // Config will be called later after consent
+    </script>
+
     <style>
         :root {
             --green: #58cc02;
@@ -16,17 +25,28 @@
             --blue: #1cb0f6;
             --red: #ff4b4b;
             --light-red: #ff8989;
-            --white: #ffffff;
-            --gray-100: #f7f7f7;
-            --gray-200: #e5e5e5;
-            --gray-300: #afafaf;
-            --gray-400: #777777;
-            --gray-500: #4b4b4b;
-            --font-family: 'Nunito', sans-serif;
             --border-radius: 16px;
-            --shadow: 0 4px 0 #00000020;
             --button-height: 60px;
+
+            /* Light Theme */
+            --bg-primary: #f7f7f7;
+            --bg-secondary: #ffffff;
+            --text-primary: #4b4b4b;
+            --text-secondary: #777777;
+            --border-color: #e5e5e5;
+            --shadow-color: #00000020;
         }
+        
+        body.dark-mode {
+            /* Dark Theme */
+            --bg-primary: #121212;
+            --bg-secondary: #1E1E1E;
+            --text-primary: #E0E0E0;
+            --text-secondary: #A0A0A0;
+            --border-color: #333333;
+            --shadow-color: #00000040;
+        }
+
 
         *, *::before, *::after {
             box-sizing: border-box;
@@ -40,15 +60,18 @@
         }
 
         body {
-            font-family: var(--font-family);
-            background: linear-gradient(180deg, var(--gray-100) 0%, #dbeeff 100%);
-            color: var(--gray-500);
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             display: flex;
             justify-content: center;
             align-items: flex-start;
             padding: 1rem;
             overflow-y: auto;
+            transition: background 0.3s, color 0.3s;
         }
+
+        body.rtl { direction: rtl; }
 
         #app-wrapper {
             width: 100%;
@@ -80,19 +103,22 @@
         .lives-display { color: var(--red); }
         .header-left, .header-right { display: flex; align-items: center; gap: 1rem; }
 
-        .sound-toggle {
-            font-size: 1.5rem;
+        .sound-toggle, .lang-toggle, .theme-toggle {
+            font-size: 1.2rem;
+            font-weight: 700;
             cursor: pointer;
             border: none;
             background: none;
+            color: var(--text-secondary);
         }
+        .lang-toggle.active { color: var(--blue); text-decoration: underline;}
 
         .progress-bar-container {
             width: 100%;
             height: 20px;
-            background-color: var(--gray-200);
+            background-color: var(--border-color);
             border-radius: 10px;
-            border: 2px solid var(--gray-200);
+            border: 2px solid var(--border-color);
             overflow: hidden;
         }
 
@@ -109,15 +135,16 @@
             flex-grow: 1;
             width: 100%;
             padding: 1.5rem;
-            background: var(--white);
+            background: var(--bg-secondary);
             border-radius: var(--border-radius);
-            border: 1px solid var(--gray-200);
+            border: 1px solid var(--border-color);
             box-shadow: 0 8px 24px #0000001a;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
             min-height: 400px;
+            transition: background 0.3s, border-color 0.3s;
         }
 
         .map-view {
@@ -129,15 +156,13 @@
             padding: 2rem 0;
         }
 
-        .stage-node {
-            position: relative;
-        }
+        .stage-node { position: relative; }
 
         .stage-button {
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            border: 8px solid var(--white);
+            border: 8px solid var(--bg-secondary);
             box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 var(--gray-300);
             display: flex;
             flex-direction: column;
@@ -145,7 +170,7 @@
             justify-content: center;
             font-weight: 900;
             cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s, color 0.3s;
         }
         .stage-button:active {
             transform: translateY(2px);
@@ -155,105 +180,64 @@
         .stage-icon { font-size: 2.5rem; }
         .stage-title-map { font-size: 0.9rem; margin-top: 5px; }
 
-        .stage-button.unlocked {
-            background: var(--green);
-            color: white;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 #3a8a00;
-            animation: pulse 1.5s infinite;
-        }
-        .stage-button.completed {
-            background: var(--yellow);
-            color: white;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 #c79a00;
-        }
-        .stage-button.locked {
-            background: var(--gray-200);
-            color: var(--gray-300);
-            cursor: not-allowed;
-            box-shadow: 0 4px 0 var(--gray-300);
-        }
-
-        .promptbot-map-icon {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            bottom: -25px;
-            left: -40px;
-            transform: rotate(-15deg);
-            transition: all 0.5s ease-in-out;
-        }
+        .stage-button.unlocked { background: var(--green); color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 #3a8a00; animation: pulse 1.5s infinite; }
+        .stage-button.completed { background: var(--yellow); color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 #c79a00; }
+        .stage-button.locked { background: var(--border-color); color: var(--text-secondary); cursor: not-allowed; box-shadow: 0 4px 0 var(--gray-300); }
         
-        .level-title {
-            width: 100%;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: var(--gray-400);
-            padding-bottom: 1rem;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid var(--gray-200);
-        }
-
-        .screen-title, .completion-title {
-            font-size: 1.8rem;
-            font-weight: 900;
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .completion-icon {
-            font-size: 4rem;
-            animation: bounce-in 0.5s ease-out;
-        }
-
-        .lesson-content, .exercise-question {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            text-align: center;
-            margin-bottom: 2rem;
-        }
+        .promptbot-map-icon { position: absolute; width: 50px; height: 50px; bottom: -25px; left: -40px; transform: rotate(-15deg); transition: all 0.5s ease-in-out; }
+        body.rtl .promptbot-map-icon { left: auto; right: -40px; transform: rotate(15deg); }
         
-        .lesson-example {
-            width: 100%;
-            padding: 1rem;
-            background: var(--gray-100);
-            border-left: 5px solid var(--blue);
-            border-radius: 8px;
-            margin-top: 1.5rem;
-            font-style: italic;
-        }
+        .level-title { width: 100%; text-align: center; font-size: 1.5rem; font-weight: 900; color: var(--text-secondary); padding-bottom: 1rem; margin-bottom: 2rem; border-bottom: 2px solid var(--border-color); }
 
-        .btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: var(--button-height); font-family: var(--font-family); font-weight: 700; font-size: 1.1rem; color: var(--gray-400); background-color: var(--white); border: 2px solid var(--gray-200); border-radius: var(--border-radius); cursor: pointer; padding: 0.5rem 1rem; text-align: center; box-shadow: var(--shadow); transition: transform 0.1s ease, box-shadow 0.1s ease; }
-        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 #00000020; }
-        .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #00000020; }
-        .btn:disabled { cursor: not-allowed; color: var(--gray-300); }
-        .btn-primary { background-color: var(--green); color: var(--white); border-color: var(--green); font-weight: 900; font-size: 1.5rem; }
+        .screen-title, .completion-title { font-size: 1.8rem; font-weight: 900; text-align: center; margin-bottom: 1.5rem; }
+        .completion-icon { font-size: 4rem; animation: bounce-in 0.5s ease-out; }
+        .lesson-content, .exercise-question { font-size: 1.1rem; line-height: 1.6; text-align: center; margin-bottom: 2rem; }
+        .lesson-example { width: 100%; padding: 1rem; background: var(--bg-primary); border-left: 5px solid var(--blue); border-radius: 8px; margin-top: 1.5rem; font-style: italic; transition: background 0.3s; }
+        body.rtl .lesson-example { border-left: none; border-right: 5px solid var(--blue); }
+
+        .btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: var(--button-height); font-family: var(--font-family); font-weight: 700; font-size: 1.1rem; color: var(--text-primary); background-color: var(--bg-secondary); border: 2px solid var(--border-color); border-radius: var(--border-radius); cursor: pointer; padding: 0.5rem 1rem; text-align: center; box-shadow: 0 4px 0 var(--shadow-color); transition: all 0.2s ease; }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--shadow-color); }
+        .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 var(--shadow-color); }
+        .btn:disabled { cursor: not-allowed; color: var(--text-secondary); }
+        .btn-primary { background-color: var(--green); color: var(--white); border-color: var(--green); }
         .btn-primary:hover:not(:disabled) { background-color: var(--light-green); border-color: var(--light-green); }
         .btn.correct { background-color: var(--green); border-color: var(--green); color: white; animation: bounce 0.5s; }
         .btn.incorrect { background-color: var(--light-red); border-color: var(--light-red); color: white; }
         
-        footer { width: 100%; position: relative; margin-top: 1rem; padding: 1rem 0; }
-        .promptbot-container { display: flex; align-items: flex-end; gap: 10px; }
+        footer { width: 100%; position: relative; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; }
+        .footer-links a, #reset-progress-btn { color: var(--text-secondary); text-decoration: none; margin: 0 0.5rem; font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0; }
+        .footer-links a:hover, #reset-progress-btn:hover { text-decoration: underline; }
+
+        .promptbot-container { display: flex; align-items: flex-end; gap: 10px; margin-top: 1rem; }
         #promptbot-svg { width: 60px; height: auto; flex-shrink: 0; }
-        .speech-bubble { position: relative; background: var(--white); border-radius: var(--border-radius); padding: 1rem; font-weight: 700; box-shadow: var(--shadow); border: 2px solid var(--gray-200); width: 100%; }
-        .speech-bubble::before { content: ''; position: absolute; left: -10px; bottom: 15px; width: 0; height: 0; border: 10px solid transparent; border-right-color: var(--white); border-left: 0; border-bottom: 0; margin-top: -5px; margin-left: -10px; }
+        .speech-bubble { position: relative; background: var(--bg-secondary); border-radius: var(--border-radius); padding: 1rem; font-weight: 700; box-shadow: 0 4px 0 var(--shadow-color); border: 1px solid var(--border-color); width: 100%; }
+        .speech-bubble::before { content: ''; position: absolute; left: -10px; bottom: 15px; width: 0; height: 0; border: 10px solid transparent; border-right-color: var(--bg-secondary); border-left: 0; border-bottom: 0; margin-top: -5px; margin-left: -10px; transition: border-right-color 0.3s; }
+        body.rtl .speech-bubble::before { left: auto; right: -10px; border-right-color: transparent; border-left-color: var(--bg-secondary); border-right: 0; border-left: 10px; margin-left: 0; margin-right: -10px; transition: border-left-color 0.3s; }
         
         #feedback-section { width: 100%; text-align: center; padding: 1rem; }
         .feedback-message { min-height: 80px; border-radius: var(--border-radius); padding: 1rem; margin-bottom: 1rem; font-weight: 700; font-size: 1.2rem; display: none; }
         .feedback-message.correct { display: block; background: #e1f9d3; color: #3a8a00; border-left: 5px solid var(--green); }
         .feedback-message.incorrect { display: block; background: #ffebee; color: #c00c00; border-left: 5px solid var(--red); }
+        body.dark-mode .feedback-message.correct { background: #2c4a27; color: #b2d8b2; }
+        body.dark-mode .feedback-message.incorrect { background: #5c2c2c; color: #f2c2c2; }
+        body.rtl .feedback-message.correct, body.rtl .feedback-message.incorrect { border-left: none; border-right: 5px solid var(--green); }
+        body.rtl .feedback-message.incorrect { border-right-color: var(--red); }
         #next-button-container { margin-top: 1rem; width: 100%; max-width: 300px; }
 
         .matching-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .matching-pair { min-height: var(--button-height); display: flex; align-items: center; justify-content: center; padding: 0.75rem; border: 2px solid var(--gray-200); border-radius: var(--border-radius); box-shadow: var(--shadow); cursor: grab; user-select: none; background: white; }
+        .matching-pair { min-height: var(--button-height); display: flex; align-items: center; justify-content: center; padding: 0.75rem; background: var(--bg-secondary); transition: background 0.3s; border: 2px solid var(--border-color); border-radius: var(--border-radius); box-shadow: 0 4px 0 var(--shadow-color); cursor: grab; user-select: none; }
         .matching-pair.selected { background: var(--blue); color: white; border-color: var(--blue); }
 
-        /* Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .modal { background: white; padding: 2rem; border-radius: var(--border-radius); max-width: 90%; width: 400px; text-align: center; animation: bounce-in 0.4s; }
+        .modal { background: var(--bg-secondary); padding: 2rem; border-radius: var(--border-radius); max-width: 90%; width: 400px; text-align: center; animation: bounce-in 0.4s; }
         .modal h3 { margin-top: 0; color: var(--blue); }
         .modal .btn { margin-top: 1.5rem; }
+        .modal .lang-switcher { margin-top: 1rem; }
         
+        #cookie-consent-banner { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-secondary); padding: 1rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: none; align-items: center; justify-content: center; gap: 1rem; z-index: 2000; text-align: center; }
+        #cookie-consent-banner p { margin: 0; max-width: 600px; }
+        #cookie-consent-banner .btn { white-space: nowrap; }
+
         .waiting-list-container { text-align:center; padding: 2rem; border: 2px dashed var(--blue); border-radius: var(--border-radius); margin-top: 2rem; }
         .waiting-list-container p { font-size: 1.1rem; }
 
@@ -263,20 +247,32 @@
         .confetti { position: fixed; top: -10px; width: 10px; height: 10px; opacity: 0.8; animation: fall 3s linear infinite; }
         @keyframes fall { to { transform: translateY(100vh); opacity: 0; } }
         
-        @media (max-width: 600px) { body { padding: 0.5rem; } #content-area { padding: 1rem; } .screen-title { font-size: 1.5rem; } .lesson-content, .exercise-question { font-size: 1rem; } .btn { font-size: 1rem; } .matching-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { body { padding: 0.5rem; } #content-area { padding: 1rem; } .screen-title { font-size: 1.5rem; } .lesson-content, .exercise-question { font-size: 1rem; } .btn { font-size: 1rem; } .matching-grid { grid-template-columns: 1fr; } #cookie-consent-banner { flex-direction: column; } }
     </style>
 </head>
 <body>
+    <div id="policy-modal-overlay" class="modal-overlay">
+        <div id="policy-modal" class="modal">
+            <h3 id="policy-title"></h3>
+            <p id="policy-text" style="text-align: left; max-height: 300px; overflow-y: auto;"></p>
+            <button id="close-policy-btn" class="btn btn-primary">Close</button>
+        </div>
+    </div>
     <div id="welcome-modal-overlay" class="modal-overlay">
         <div class="modal">
-            <h3>Welcome to Prompting 101!</h3>
-            <p>This is a short, interactive course to help you get better results from AI tools like ChatGPT. Learn to write clearer prompts to unlock the AI's full potential.</p>
-            <button id="start-course-btn" class="btn btn-primary">Let's Go! 🚀</button>
+            <h3 id="welcome-title"></h3>
+            <p id="welcome-text"></p>
+            <div class="lang-switcher">
+                <button id="modal-lang-en" class="lang-toggle active">EN</button>
+                <span>|</span>
+                <button id="modal-lang-he" class="lang-toggle">עב</button>
+            </div>
+            <button id="start-course-btn" class="btn btn-primary"></button>
         </div>
     </div>
     <div id="tip-modal-overlay" class="modal-overlay">
         <div id="tip-modal" class="modal">
-            <h3>💡 Tip from PromptBot!</h3>
+            <h3 id="tip-title"></h3>
             <p id="tip-text"></p>
             <button id="close-tip-btn" class="btn btn-primary">Got it!</button>
         </div>
@@ -289,6 +285,7 @@
                 </div>
                 <div class="header-right">
                     <div id="lives-display" class="lives-display"></div>
+                    <button id="theme-toggle" class="theme-toggle">🌙</button>
                     <button id="sound-toggle" class="sound-toggle">🔊</button>
                 </div>
             </div>
@@ -297,22 +294,29 @@
             </div>
         </header>
 
-        <main id="content-area">
-            <!-- Content will be rendered by the script -->
-        </main>
+        <main id="content-area"></main>
 
         <footer>
+            <div class="footer-links">
+                <a href="#" id="terms-link">Terms of Use</a>
+                <a href="#" id="privacy-link">Privacy Policy</a>
+            </div>
             <div class="promptbot-container">
                 <svg id="promptbot-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                     <g>
                         <rect x="10" y="30" width="80" height="60" rx="15" fill="#1cb0f6"/> <rect x="25" y="88" width="15" height="12" fill="#777777"/> <rect x="60" y="88" width="15" height="12" fill="#777777"/> <circle cx="35" cy="55" r="10" fill="white"/> <circle cx="35" cy="55" r="5" fill="#4b4b4b"/> <circle cx="65" cy="55" r="10" fill="white"/> <circle cx="65" cy="55" r="5" fill="#4b4b4b"/> <path d="M35 75 Q 50 80, 65 75" stroke="#ffffff" stroke-width="3" fill="none"/> <rect x="45" y="20" width="10" height="15" rx="3" fill="#ffc800"/> <circle cx="50" cy="15" r="5" fill="#ffc800"/>
                     </g>
                 </svg>
-                <div id="promptbot-speech" class="speech-bubble">
-                    Welcome! Select a module to start.
-                </div>
+                <div id="promptbot-speech" class="speech-bubble"></div>
             </div>
         </footer>
+    </div>
+    <div id="cookie-consent-banner">
+        <p id="cookie-text"></p>
+        <div class="cookie-buttons">
+            <button id="accept-cookies" class="btn btn-primary"></button>
+            <button id="decline-cookies" class="btn"></button>
+        </div>
     </div>
     
     <script>
@@ -321,12 +325,28 @@
         const xpDisplay = document.querySelector('.xp-display');
         const livesDisplay = document.getElementById('lives-display');
         const soundToggle = document.getElementById('sound-toggle');
+        const themeToggle = document.getElementById('theme-toggle');
+        const modalLangEnBtn = document.getElementById('modal-lang-en');
+        const modalLangHeBtn = document.getElementById('modal-lang-he');
         const promptBotSpeech = document.getElementById('promptbot-speech');
         const welcomeModalOverlay = document.getElementById('welcome-modal-overlay');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeText = document.getElementById('welcome-text');
         const startCourseBtn = document.getElementById('start-course-btn');
         const tipModalOverlay = document.getElementById('tip-modal-overlay');
+        const tipTitle = document.querySelector('#tip-modal h3');
         const tipText = document.getElementById('tip-text');
         const closeTipBtn = document.getElementById('close-tip-btn');
+        const cookieBanner = document.getElementById('cookie-consent-banner');
+        const cookieText = document.getElementById('cookie-text');
+        const acceptCookiesBtn = document.getElementById('accept-cookies');
+        const declineCookiesBtn = document.getElementById('decline-cookies');
+        const termsLink = document.getElementById('terms-link');
+        const privacyLink = document.getElementById('privacy-link');
+        const policyModalOverlay = document.getElementById('policy-modal-overlay');
+        const policyTitle = document.getElementById('policy-title');
+        const policyText = document.getElementById('policy-text');
+        const closePolicyBtn = document.getElementById('close-policy-btn');
 
         let audioCtx;
         function initAudio() { if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { console.error("Web Audio API not supported."); } } }
@@ -337,12 +357,14 @@
             o.connect(g); g.connect(audioCtx.destination);
             if (type === 'correct') { o.type = 'sine'; o.frequency.setValueAtTime(600, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1); g.gain.setValueAtTime(0.2, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2); o.start(); o.stop(audioCtx.currentTime + 0.2); }
             else if (type === 'incorrect') { o.type = 'square'; o.frequency.setValueAtTime(200, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2); g.gain.setValueAtTime(0.2, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3); o.start(); o.stop(audioCtx.currentTime + 0.3); }
-            else if (type === 'streak') { const notes = [600, 750, 900]; g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4); notes.forEach((n, i) => { const o2 = audioCtx.createOscillator(); o2.connect(g); o2.type = 'triangle'; o2.frequency.setValueAtTime(n, audioCtx.currentTime + i * 0.1); o2.start(audioCtx.currentTime + i * 0.1); o2.stop(audioCtx.currentTime + i * 0.1 + 0.1); }); }
+            else if (type === 'streak' || type === 'moduleComplete') { const notes = type === 'streak' ? [600, 750, 900] : [523, 659, 783, 1046]; g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5); notes.forEach((n, i) => { const o2 = audioCtx.createOscillator(); o2.connect(g); o2.type = 'triangle'; o2.frequency.setValueAtTime(n, audioCtx.currentTime + i * 0.1); o2.start(audioCtx.currentTime + i * 0.1); o2.stop(audioCtx.currentTime + i * 0.1 + 0.1); }); }
         }
 
         let state = {};
         const defaultState = {
             view: 'map',
+            lang: 'en',
+            theme: 'light',
             activeModule: { id: null, screen: 0, lives: 3 },
             xp: 0,
             streak: 0,
@@ -350,57 +372,147 @@
             completedModules: []
         };
         
-        const tips = [
-            "Don't be afraid to say 'please' and 'thank you'. Politeness can sometimes improve the AI's tone!",
-            "If the AI refuses a request, try rephrasing it. Sometimes a small change makes a big difference.",
-            "Using bullet points or numbered lists in your prompt can help organize the AI's thoughts.",
-            "You can set a word limit! Try adding 'in 50 words or less' to your next prompt for a concise answer."
-        ];
-        
-        const courseMap = [{
-            level: 1, title: "Foundations of Prompt Engineering", modules: [
-                { id: 1, title: "The Basics", icon: "💡", screens: [
-                    { type: 'lesson', title: 'What is a Prompt?', content: "A prompt is an instruction for an AI. Think of it like asking a smart assistant for help. Clear instructions get the best results." },
-                    { type: 'exercise', subType: 'mcq', question: "Which is a prompt?", options: [{text: 'blue sky', correct: false}, {text: 'Tell me a joke', correct: true}, {text: 'Photos of cats', correct: false}], feedback: {correct: "Exactly! A prompt is a command or question.", incorrect: "A prompt is a direct instruction, not just a topic."} },
-                    { type: 'exercise', subType: 'mcq', question: "An AI is best at...", options: [{text: 'Having feelings', correct: false}, {text: 'Following instructions', correct: true}, {text: 'Making its own decisions', correct: false}], feedback: {correct: "Correct! AI excels at following your instructions precisely.", incorrect: "AI doesn't have feelings or make its own choices; it follows commands."} },
-                    { type: 'lesson', title: 'Right vs. Wrong Prompts', content: "A good prompt is a clear, complete sentence. A bad prompt is often just one or two vague words.", example: "Right: 'List three benefits of regular exercise.'\nWrong: 'exercise benefits'" },
-                    { type: 'exercise', subType: 'ab-test', question: "Which prompt is better?", options: [{text: 'Tell me about the Roman Empire.', correct: false}, {text: 'Summarize the key events of the Roman Empire.', correct: true}], feedback: {correct: "Yes! A specific verb like 'summarize' gives the AI a clear task.", incorrect: "'Summarize' is a better instruction than 'Tell me about'."} },
-                    { type: 'exercise', subType: 'mcq', question: "What's the goal of a good prompt?", options: [{text: 'To be short', correct: false}, {text: 'To be confusing', correct: false}, {text: 'To be clear and specific', correct: true}], feedback: {correct: "You got it! Clarity is the most important thing.", incorrect: "The main goal is always to be as clear as possible."} },
-                ]},
-                { id: 2, title: "Refining", icon: "⚙️", screens: [
-                    { type: 'lesson', title: 'The Power of Specificity', content: "Adding details helps the AI narrow down the possibilities. The more specific you are, the closer you'll get to the perfect answer.", example: "Good: 'Write a recipe.'\nBetter: 'Write a simple recipe for vegan chocolate chip cookies.'" },
-                    { type: 'exercise', subType: 'ab-test', question: "Which prompt is more specific?", options: [{text: 'Plan a trip to France for a foodie.', correct: false}, {text: 'Plan a 3-day trip to Lyon, France focused on local cuisine.', correct: true}], feedback: {correct: "Perfect! Details like location and focus lead to a more helpful plan.", incorrect: "The second prompt is much more specific and will get a better result."} },
-                    { type: 'exercise', subType: 'matching', question: "Match the goal to a helpful detail.", pairs: [{item1: 'Get a recipe', item2: 'for a beginner'}, {item1: 'Write a story', item2: 'about a space pirate'}, {item1: 'Plan a workout', item2: 'for my legs'}], feedback: {correct: "Great matches! Those details make a huge difference.", incorrect: "Try to match the detail that makes the goal clearer."} },
-                    { type: 'lesson', title: 'Giving Helpful Context', content: "Context is the background information the AI needs. Tell it who you are or what the situation is.", example: "Without Context: 'What are 3 easy songs to learn?'\nWith Context: 'I'm a beginner guitarist. What are 3 easy songs to learn?'" },
-                    { type: 'exercise', subType: 'ab-test', question: "Which prompt gives better context?", options: [{text: 'Write a professional email to my boss.', correct: false}, {text: 'Write a professional email to my boss requesting Friday off.', correct: true}], feedback: {correct: "Excellent! Now the AI knows the purpose of the email.", incorrect: "The second prompt is better because it explains the *reason* for the email."} },
-                    { type: 'exercise', subType: 'mcq', question: "You want a book recommendation. What's the most helpful context to add?", options: [{text: 'I like books', correct: false}, {text: 'I enjoyed the book "Dune"', correct: true}, {text: 'I read a lot', correct: false}], feedback: {correct: "Yes! Naming a specific book you liked gives the AI a perfect starting point.", incorrect: "Giving a specific example of what you like is the best context."} },
-                ]},
-                { id: 3, title: "Roles", icon: "🎭", screens: [
-                     { type: 'lesson', title: "Give the AI a 'Role'", content: "Telling the AI to 'act as' a certain expert is a power move. This changes the style and content of the answer.", example: "'Act as a pirate...' will give a very different answer than 'Act as a scientist...'" },
-                     { type: 'exercise', subType: 'mcq', question: "To get a fun, rhyming answer, you could say:", options: [{text: "'Act as a historian'", correct: false}, {text: "'Act as a poet'", correct: true}, {text: "'Act as an accountant'", correct: false}], feedback: {correct: "Great choice! A poet is the perfect role for that task.", incorrect: "A poet would be the best role for creating rhyming content."} },
-                     { type: 'lesson', title: 'Define the Output Format', content: "Be explicit about how you want your answer. Do you want a list? A table? A single paragraph? Just ask!", example: "'List the pros and cons in a two-column table.'" },
-                     { type: 'exercise', subType: 'mcq', question: "Which prompt asks for a specific format?", options: [{text: "'Compare cats and dogs.'", correct: false}, {text: "'Write about cats and dogs.'", correct: false}, {text: "'Put the differences between cats and dogs in a bulleted list.'", correct: true}], feedback: {correct: "Correct! Specifying 'a bulleted list' is great output formatting.", incorrect: "The best prompt is the one that explicitly asks for a certain format, like a list."} },
-                     { type: 'exercise', subType: 'ab-test', question: "Which is the BEST prompt?", options: [{text: 'Explain black holes as a teacher.', correct: false}, {text: 'Act as a science teacher and explain black holes to a 10-year-old in three paragraphs.', correct: true}], feedback: {correct: "Perfect! It combines a role, context (for a 10-year-old), and output format (three paragraphs).", incorrect: "Prompt B is the strongest because it uses a role, gives context, and defines the output format."} },
-                     { type: 'exercise', subType: 'mcq', question: "To get a short answer, you can add:", options: [{text: "'Make it long'", correct: false}, {text: "'in 25 words or less'", correct: true}, {text: "'Use big words'", correct: false}], feedback: {correct: "That's right! Setting a word count is a powerful way to control the output.", incorrect: "Specifying a word count is the clearest way to ask for a short answer."} },
-                ]},
-                { id: 4, title: "Locked", icon: "🔒", screens: [] },
-                { id: 5, title: "Locked", icon: "🔒", screens: [] },
-            ]
-        }];
-        const finalScreenData = { type: 'final', title: 'Level 1 Complete! 🎉', content: "Congratulations! You've completed Level 1. You now have the skills to write clearer, more effective prompts. Keep practicing!", promptBot: "You're a prompt legend! 🏆" };
+        const translations = {
+            en: {
+                welcomeTitle: "Welcome to Prompting 101!",
+                welcomeText: "This is a short, interactive course to help you get better results from AI tools like ChatGPT. Learn to write clearer prompts to unlock the AI's full potential.",
+                letsGo: "Let's Go! 🚀",
+                gotIt: "Got it!",
+                tipFromBot: "💡 Tip from PromptBot!",
+                mapSpeech: "Great job! Select the next module to continue learning.",
+                stageSpeech: "Let's give it a shot!",
+                moduleComplete: "Module Complete!",
+                outOfTries: "Out of Tries!",
+                outOfTriesMsg: "Don't worry, practice makes perfect. Let's try this module again from the beginning.",
+                tryAgain: "Try Again",
+                continueToMap: "Continue to Map",
+                level1Title: "Foundations of Prompt Engineering",
+                finalTitle: "Level 1 Complete! 🎉",
+                finalContent: "Congratulations! You've completed Level 1. You now have the skills to write clearer, more effective prompts. Keep practicing!",
+                finalBot: "You're a prompt legend! 🏆",
+                waitingList: "Want to know when Level 2 is ready?",
+                waitingListCTA: "Join the waiting list!",
+                getNotified: "Get Notified 🚀",
+                cookieText: "We use cookies to improve your experience and analyze site traffic.",
+                accept: "Accept",
+                decline: "Decline",
+                terms: "Terms of Use",
+                privacy: "Privacy Policy",
+                resetProgress: "Reset Progress",
+                tips: [
+                    "Don't be afraid to say 'please'. Politeness can sometimes improve the AI's tone!",
+                    "If the AI refuses a request, try rephrasing it. A small change can make a big difference.",
+                    "Using bullet points or numbered lists in your prompt can help organize the AI's thoughts.",
+                    "You can set a word limit! Try adding 'in 50 words or less' for a concise answer."
+                ],
+                modules: [
+                    { id: 1, title: "The Basics", icon: "💡", screens: [
+                        { type: 'lesson', title: 'What is a Prompt?', content: "A prompt is an instruction for an AI. Think of it like asking a smart assistant for help. Clear instructions get the best results." },
+                        { type: 'exercise', subType: 'mcq', question: "Which is a prompt?", options: [{text: 'blue sky', correct: false}, {text: 'Tell me a joke', correct: true}, {text: 'Photos of cats', correct: false}], feedback: {correct: "Exactly! A prompt is a command or question.", incorrect: "A prompt is a direct instruction, not just a topic."} },
+                        { type: 'exercise', subType: 'mcq', question: "An AI is best at...", options: [{text: 'Having feelings', correct: false}, {text: 'Following instructions', correct: true}, {text: 'Making its own decisions', correct: false}], feedback: {correct: "Correct! AI excels at following your instructions precisely.", incorrect: "AI doesn't have feelings or make its own choices; it follows commands."} },
+                        { type: 'lesson', title: 'Right vs. Wrong Prompts', content: "A good prompt is a clear, complete sentence. A bad prompt is often just one or two vague words.", example: "Right: 'List three benefits of regular exercise.'\nWrong: 'exercise benefits'" },
+                        { type: 'exercise', subType: 'ab-test', question: "Which prompt is better?", options: [{text: 'Tell me about the Roman Empire.', correct: false}, {text: 'Summarize the key events of the Roman Empire.', correct: true}], feedback: {correct: "Yes! A specific verb like 'summarize' gives the AI a clear task.", incorrect: "'Summarize' is a better instruction than 'Tell me about'."} },
+                        { type: 'exercise', subType: 'mcq', question: "What's the goal of a good prompt?", options: [{text: 'To be short', correct: false}, {text: 'To be confusing', correct: false}, {text: 'To be clear and specific', correct: true}], feedback: {correct: "You got it! Clarity is the most important thing.", incorrect: "The main goal is always to be as clear as possible."} },
+                    ]},
+                    { id: 2, title: "Refining", icon: "⚙️", screens: [
+                        { type: 'lesson', title: 'The Power of Specificity', content: "Adding details helps the AI narrow down the possibilities. The more specific you are, the closer you'll get to the perfect answer.", example: "Good: 'Write a recipe.'\nBetter: 'Write a simple recipe for vegan chocolate chip cookies.'" },
+                        { type: 'exercise', subType: 'ab-test', question: "Which prompt is more specific?", options: [{text: 'Plan a trip to France for a foodie.', correct: false}, {text: 'Plan a 3-day trip to Lyon, France focused on local cuisine.', correct: true}], feedback: {correct: "Perfect! Details like location and focus lead to a more helpful plan.", incorrect: "The second prompt is much more specific and will get a better result."} },
+                        { type: 'exercise', subType: 'matching', question: "Match the goal to a helpful detail.", pairs: [{item1: 'Get a recipe', item2: 'for a beginner'}, {item1: 'Write a story', item2: 'about a space pirate'}, {item1: 'Plan a workout', item2: 'for my legs'}], feedback: {correct: "Great matches! Those details make a huge difference.", incorrect: "Try to match the detail that makes the goal clearer."} },
+                        { type: 'lesson', title: 'Giving Helpful Context', content: "Context is the background information the AI needs. Tell it who you are or what the situation is.", example: "Without Context: 'What are 3 easy songs to learn?'\nWith Context: 'I'm a beginner guitarist. What are 3 easy songs to learn?'" },
+                        { type: 'exercise', subType: 'ab-test', question: "Which prompt gives better context?", options: [{text: 'Write an email to my boss.', correct: false}, {text: 'Write a professional email to my boss requesting Friday off.', correct: true}], feedback: {correct: "Excellent! Now the AI knows the purpose of the email.", incorrect: "The second prompt is better because it explains the *reason* for the email."} },
+                        { type: 'exercise', subType: 'mcq', question: "You want a book recommendation. What's the most helpful context to add?", options: [{text: 'I like books', correct: false}, {text: 'I enjoyed the book "Dune"', correct: true}, {text: 'I read a lot', correct: false}], feedback: {correct: "Yes! Naming a specific book you liked gives the AI a perfect starting point.", incorrect: "Giving a specific example of what you like is the best context."} },
+                    ]},
+                    { id: 3, title: "Roles", icon: "🎭", screens: [
+                         { type: 'lesson', title: "Give the AI a 'Role'", content: "Telling the AI to 'act as' a certain expert is a power move. This changes the style and content of the answer.", example: "'Act as a pirate...' will give a very different answer than 'Act as a scientist...'" },
+                         { type: 'exercise', subType: 'mcq', question: "To get a fun, rhyming answer, you could say:", options: [{text: "'Act as a historian'", correct: false}, {text: "'Act as a poet'", correct: true}, {text: "'Act as an accountant'", correct: false}], feedback: {correct: "Great choice! A poet is the perfect role for that task.", incorrect: "A poet would be the best role for creating rhyming content."} },
+                         { type: 'lesson', title: 'Define the Output Format', content: "Be explicit about how you want your answer. Do you want a list? A table? A single paragraph? Just ask!", example: "'List the pros and cons in a two-column table.'" },
+                         { type: 'exercise', subType: 'mcq', question: "Which prompt asks for a specific format?", options: [{text: "'Compare cats and dogs.'", correct: false}, {text: "'Write about cats and dogs.'", correct: false}, {text: "'Put the differences between cats and dogs in a bulleted list.'", correct: true}], feedback: {correct: "Correct! Specifying 'a bulleted list' is great output formatting.", incorrect: "The best prompt is the one that explicitly asks for a certain format, like a list."} },
+                         { type: 'exercise', subType: 'ab-test', question: "Which is the BEST prompt?", options: [{text: 'Explain black holes as a teacher.', correct: false}, {text: 'Act as a science teacher and explain black holes to a 10-year-old in three simple paragraphs.', correct: true}], feedback: {correct: "Perfect! It combines a role, context (for a 10-year-old), and output format (three paragraphs).", incorrect: "Prompt B is the strongest because it uses a role, gives context, and defines the output format."} },
+                         { type: 'exercise', subType: 'mcq', question: "To get a short answer, you can add:", options: [{text: "'Make it long'", correct: false}, {text: "'in 25 words or less'", correct: true}, {text: "'Use big words'", correct: false}], feedback: {correct: "That's right! Setting a word count is a powerful way to control the output.", incorrect: "Specifying a word count is the clearest way to ask for a short answer."} },
+                    ]},
+                    { id: 4, title: "Locked", icon: "🔒", screens: [] },
+                    { id: 5, title: "Locked", icon: "�", screens: [] },
+                ]
+            },
+            he: {
+                welcomeTitle: "ברוכים הבאים להנדסת פרומפטים!",
+                welcomeText: "זהו קורס קצר ואינטראקטיבי שיעזור לכם להפיק תוצאות טובות יותר מכלי בינה מלאכותית כמו ChatGPT. למדו לכתוב פרומפטים ברורים יותר כדי למצות את מלוא הפוטנציאל של הבינה המלאכותית.",
+                letsGo: "קדימה! 🚀",
+                gotIt: "הבנתי!",
+                tipFromBot: "💡 טיפ מפרומפט-בוט!",
+                mapSpeech: "עבודה נהדרת! בחרו את המודול הבא כדי להמשיך.",
+                stageSpeech: "בואו ננסה את זה!",
+                moduleComplete: "המודול הושלם!",
+                outOfTries: "נגמרו הניסיונות!",
+                outOfTriesMsg: "לא נורא, אימון מוביל לשלמות. בואו ננסה את המודול הזה שוב מההתחלה.",
+                tryAgain: "לנסות שוב",
+                continueToMap: "המשך למפה",
+                level1Title: "יסודות הנדסת הפרומפטים",
+                finalTitle: "שלב 1 הושלם! 🎉",
+                finalContent: "כל הכבוד! השלמתם את שלב 1. כעת יש לכם את הכלים לכתוב פרומפטים ברורים ויעילים יותר. המשיכו להתאמן!",
+                finalBot: "אתם אלופי הפרומפטים! 🏆",
+                waitingList: "רוצים לדעת מתי שלב 2 יהיה מוכן?",
+                waitingListCTA: "הצטרפו לרשימת ההמתנה!",
+                getNotified: "עדכנו אותי 🚀",
+                cookieText: "אנו משתמשים בעוגיות כדי לשפר את חווית המשתמש ולנתח את תעבורת האתר.",
+                accept: "אישור",
+                decline: "סירוב",
+                terms: "תנאי שימוש",
+                privacy: "מדיניות פרטיות",
+                resetProgress: "אפס התקדמות",
+                tips: [
+                    "אל תפחדו לומר 'בבקשה'. נימוס יכול לפעמים לשפר את הטון של הבינה המלאכותית!",
+                    "אם ה-AI מסרב לבקשה, נסו לנסח אותה מחדש. שינוי קטן יכול לחולל הבדל גדול.",
+                    "שימוש בנקודות או רשימות ממוספרות בפרומפט יכול לעזור לארגן את המחשבות של ה-AI.",
+                    "אפשר להגדיר מגבלת מילים! נסו להוסיף 'ב-50 מילים או פחות' לתשובה תמציתית."
+                ],
+                modules: [
+                    { id: 1, title: "היסודות", icon: "💡", screens: [
+                        { type: 'lesson', title: 'מהו פרומפט?', content: "פרומפט הוא פשוט הוראה שנותנים לבינה מלאכותית. חשבו על זה כמו לבקש עזרה מחבר חכם. הוראות טובות מניבות תוצאות טובות." },
+                        { type: 'exercise', subType: 'mcq', question: "איזה מהבאים הוא פרומפט?", options: [{text: 'שמיים כחולים', correct: false}, {text: 'ספר לי בדיחה', correct: true}, {text: 'תמונות של חתולים', correct: false}], feedback: {correct: "בדיוק! פרומפט הוא פקודה או שאלה.", incorrect: "פרומפט הוא הוראה ישירה, לא רק נושא כללי."} },
+                        { type: 'exercise', subType: 'mcq', question: "בינה מלאכותית מצטיינת ב...", options: [{text: 'להרגיש רגשות', correct: false}, {text: 'ביצוע הוראות', correct: true}, {text: 'קבלת החלטות עצמאיות', correct: false}], feedback: {correct: "נכון! AI מצטיין בביצוע מדויק של הוראות.", incorrect: "ל-AI אין רגשות או יכולת בחירה; הוא מבצע פקודות."} },
+                        { type: 'lesson', title: 'פרומפט נכון מול שגוי', content: "פרומפט טוב הוא משפט ברור ושלם. פרומפט גרוע הוא לרוב רק מילה או שתיים מעורפלות.", example: "נכון: 'ציין שלושה יתרונות של פעילות גופנית.'\nשגוי: 'יתרונות ספורט'" },
+                        { type: 'exercise', subType: 'ab-test', question: "איזה פרומפט עדיף?", options: [{text: 'היסטוריה של רומא.', correct: false}, {text: 'סכם את האירועים המרכזיים של האימפריה הרומית.', correct: true}], feedback: {correct: "כן! פועל ספציפי כמו 'סכם' נותן ל-AI משימה ברורה.", incorrect: "ההוראה 'סכם' טובה יותר מ'ספר לי על'."} },
+                        { type: 'exercise', subType: 'mcq', question: "מה המטרה של פרומפט טוב?", options: [{text: 'להיות קצר', correct: false}, {text: 'להיות מבלבל', correct: false}, {text: 'להיות ברור וספציפי', correct: true}], feedback: {correct: "מעולה! בהירות היא הדבר החשוב ביותר.", incorrect: "המטרה העיקרית היא תמיד להיות כמה שיותר ברור."} },
+                    ]},
+                    { id: 2, title: "דיוק", icon: "⚙️", screens: [
+                        { type: 'lesson', title: 'כוחו של הדיוק', content: "הוספת פרטים עוזרת ל-AI לצמצם את האפשרויות. ככל שתהיו ספציפיים יותר, תתקרבו לתשובה המושלמת.", example: "טוב: 'כתוב מתכון.'\nטוב יותר: 'כתוב מתכון פשוט לעוגיות שוקולד צ'יפס טבעוניות.'" },
+                        { type: 'exercise', subType: 'ab-test', question: "איזה פרומפט יותר ספציפי?", options: [{text: 'תכנן טיול בצרפת לאוהב אוכל.', correct: false}, {text: 'תכנן טיול של 3 ימים בליון, צרפת, המתמקד במטבח המקומי.', correct: true}], feedback: {correct: "מושלם! פרטים כמו מיקום ומיקוד מובילים לתוכנית מועילה יותר.", incorrect: "הפרומפט השני הרבה יותר ספציפי וישיג תוצאה טובה יותר."} },
+                        { type: 'exercise', subType: 'matching', question: "התאם את המטרה לפרט שיעזור לה.", pairs: [{item1: 'לקבל מתכון', item2: 'למתחילים'}, {item1: 'לכתוב סיפור', item2: 'על פיראט חלל'}, {item1: 'לתכנן אימון', item2: 'לרגליים'}], feedback: {correct: "התאמות נהדרות! הפרטים האלה עושים הבדל עצום.", incorrect: "נסה להתאים את הפרט שהופך את המטרה לברורה יותר."} },
+                        { type: 'lesson', title: 'מתן הקשר מועיל', content: "הקשר הוא המידע הרקע שה-AI צריך. אמרו לו מי אתם או מה המצב.", example: "בלי הקשר: 'על אילו 3 שירים קל ללמוד?'\nעם הקשר: 'אני גיטריסט מתחיל. על אילו 3 שירים קל ללמוד?'" },
+                        { type: 'exercise', subType: 'ab-test', question: "איזה פרומפט נותן הקשר טוב יותר?", options: [{text: 'כתוב אימייל מקצועי לבוס שלי.', correct: false}, {text: 'כתוב אימייל מקצועי לבוס שלי בבקשה ליום חופש בשישי.', correct: true}], feedback: {correct: "מצוין! עכשיו ה-AI יודע את מטרת האימייל.", incorrect: "פרומפט ב' טוב יותר כי הוא מסביר את *הסיבה* לאימייל."} },
+                        { type: 'exercise', subType: 'mcq', question: "אתה רוצה המלצה על ספר. מה ההקשר הכי מועיל להוסיף?", options: [{text: 'אני אוהב ספרים', correct: false}, {text: 'נהניתי מהספר "חולית"', correct: true}, {text: 'אני קורא הרבה', correct: false}], feedback: {correct: "כן! ציון שם של ספר ספציפי שאהבת נותן ל-AI נקודת התחלה מושלמת.", incorrect: "לתת דוגמה ספציפית למה שאתה אוהב זה ההקשר הטוב ביותר."} },
+                    ]},
+                     { id: 3, title: "תפקידים", icon: "🎭", screens: [
+                        { type: 'lesson', title: 'לתת ל-AI "תפקיד"', content: "לבקש מה-AI 'לפעול כמו' מומחה כלשהו זה מהלך מנצח. זה משנה את סגנון ותוכן התשובה.", example: "'פעל כמו פיראט...' ייתן תשובה שונה מאוד מ-'פעל כמו מדען...'" },
+                        { type: 'exercise', subType: 'mcq', question: "כדי לקבל תשובה מהנה בחרוזים, אפשר לומר:", options: [{text: "'פעל כמו היסטוריון'", correct: false}, {text: "'פעל כמו משורר'", correct: true}, {text: "'פעל כמו רואה חשבון'", correct: false}], feedback: {correct: "בחירה מעולה! משורר הוא התפקיד המושלם למשימה.", incorrect: "משורר יהיה התפקיד הטוב ביותר ליצירת תוכן בחרוזים."} },
+                        { type: 'lesson', title: 'להגדיר את הפלט', content: "היו מפורשים לגבי איך אתם רוצים את התשובה. רוצים רשימה? טבלה? פסקה אחת? פשוט תבקשו!", example: "'הצג את היתרונות והחסרונות בטבלה עם שתי עמודות.'" },
+                        { type: 'exercise', subType: 'mcq', question: "איזה פרומפט מבקש פורמט ספציפי?", options: [{text: "'השווה בין חתולים לכלבים.'", correct: false}, {text: "'כתוב על חתולים וכלבים.'", correct: false}, {text: "'שים את ההבדלים בין חתולים לכלבים ברשימת תבליטים.'", correct: true}], feedback: {correct: "נכון! ציון 'רשימת תבליטים' הוא הגדרת פלט מצוינת.", incorrect: "הפרומפט הטוב ביותר הוא זה שמבקש במפורש פורמט מסוים, כמו רשימה."} },
+                        { type: 'exercise', subType: 'ab-test', question: "איזה פרומפט הוא הטוב ביותר?", options: [{text: 'הסבר על חורים שחורים כמורה.', correct: false}, {text: 'פעל כמורה למדעים והסבר על חורים שחורים לילד בן 10 בשלוש פסקאות פשוטות.', correct: true}], feedback: {correct: "מושלם! הוא משלב תפקיד, הקשר (לילד בן 10), ופורמט פלט (שלוש פסקאות).", incorrect: "פרומפט ב' הוא החזק ביותר כי הוא משתמש בתפקיד, נותן הקשר ומגדיר את פורמט הפלט."} },
+                        { type: 'exercise', subType: 'mcq', question: "כדי לקבל תשובה קצרה, אפשר להוסיף:", options: [{text: "'תכתוב ארוך'", correct: false}, {text: "'ב-25 מילים או פחות'", correct: true}, {text: "'השתמש במילים גבוהות'", correct: false}], feedback: {correct: "נכון מאוד! הגבלת מילים היא דרך חזקה לשלוט בפלט.", incorrect: "ציון הגבלת מילים הוא הדרך הברורה ביותר לבקש תשובה קצרה."} },
+                    ]},
+                    { id: 4, title: "נעול", icon: "🔒", screens: [] },
+                    { id: 5, title: "נעול", icon: "🔒", screens: [] },
+                ]
+            }
+        };
 
         function saveData() { localStorage.setItem('promptCourseProgress', JSON.stringify(state)); }
-        function loadData() { const savedData = localStorage.getItem('promptCourseProgress'); state = savedData ? { ...defaultState, ...JSON.parse(savedData) } : { ...defaultState }; }
+        function loadData() {
+            const savedData = localStorage.getItem('promptCourseProgress');
+            state = savedData ? { ...defaultState, ...JSON.parse(savedData) } : { ...defaultState };
+        }
         function createButton(text, onClick, extraClass = '') { const btn = document.createElement('button'); btn.innerHTML = text; btn.className = `btn ${extraClass}`; btn.onclick = onClick; return btn; }
         
         function updateUI() { 
-            const totalModules = courseMap[0].modules.filter(m=>m.screens.length > 0).length;
+            const t = translations[state.lang];
+            const totalModules = t.modules.filter(m=>m.screens.length > 0).length;
             let progressPercentage = totalModules > 0 ? (state.completedModules.length / totalModules) * 100 : 0;
             
             livesDisplay.style.display = 'none';
             
             if (state.view === 'stage') {
-                const module = courseMap[0].modules.find(s => s.id === state.activeModule.id);
+                const module = t.modules.find(s => s.id === state.activeModule.id);
                 progressPercentage = module.screens.length > 0 ? (state.activeModule.screen / module.screens.length) * 100 : 0;
                 livesDisplay.innerHTML = `💡&nbsp;`.repeat(state.activeModule.lives);
                 livesDisplay.style.display = 'block';
@@ -408,7 +520,9 @@
             
             progressBar.style.width = `${progressPercentage}%`;
             xpDisplay.innerHTML = `💎 ${state.xp} XP`; 
-            soundToggle.textContent = state.isMuted ? '🔇' : '🔊'; 
+            soundToggle.textContent = '🔊';
+            themeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+            document.body.classList.toggle('rtl', state.lang === 'he');
         }
 
         function render() {
@@ -424,18 +538,21 @@
 
         function showTip() {
             if (Math.random() < 0.25) {
-                const randomTip = tips[Math.floor(Math.random() * tips.length)];
+                const t = translations[state.lang];
+                const randomTip = t.tips[Math.floor(Math.random() * t.tips.length)];
+                tipTitle.textContent = t.tipFromBot;
                 tipText.textContent = randomTip;
+                closeTipBtn.textContent = t.gotIt;
                 tipModalOverlay.style.display = 'flex';
             }
         }
 
         function renderMapView() {
-            const level = courseMap[0];
+            const t = translations[state.lang];
             const mapView = document.createElement('div');
             mapView.className = 'map-view';
-            mapView.innerHTML = `<h2 class="level-title">${level.title}</h2>`;
-            level.modules.forEach(module => {
+            mapView.innerHTML = `<h2 class="level-title">${t.level1Title}</h2>`;
+            t.modules.forEach(module => {
                 if (!module.screens || module.screens.length === 0) return;
                 const node = document.createElement('div');
                 node.className = 'stage-node';
@@ -449,7 +566,12 @@
                 if(isLocked) button.classList.add('locked');
                 button.disabled = isLocked;
                 button.innerHTML = `<div class="stage-icon">${isCompleted ? '⭐' : module.icon}</div><div class="stage-title-map">${module.title}</div>`;
-                button.onclick = () => { state.view = 'stage'; state.activeModule = { id: module.id, screen: 0, lives: 3 }; render(); };
+                button.onclick = () => { 
+                    gtag('event', 'module_start', { 'module_id': module.id, 'module_title': module.title });
+                    state.view = 'stage'; 
+                    state.activeModule = { id: module.id, screen: 0, lives: 3 }; 
+                    render(); 
+                };
                 if (isUnlocked) {
                     const botIcon = document.createElement('div');
                     botIcon.className = 'promptbot-map-icon';
@@ -460,18 +582,19 @@
                 mapView.appendChild(node);
             });
             contentArea.appendChild(mapView);
-            promptBotSpeech.textContent = "Great job! Select the next module to continue learning.";
+            promptBotSpeech.textContent = t.mapSpeech;
         }
 
         function renderModuleView() {
-            const module = courseMap[0].modules.find(s => s.id === state.activeModule.id);
+            const t = translations[state.lang];
+            const module = t.modules.find(s => s.id === state.activeModule.id);
             if (!module) return;
             const screenData = module.screens[state.activeModule.screen];
             const title = document.createElement('h1');
             title.className = 'screen-title';
             title.textContent = screenData.title;
             contentArea.appendChild(title);
-            promptBotSpeech.textContent = "Let's give it a shot!";
+            promptBotSpeech.textContent = t.stageSpeech;
             if (screenData.type === 'lesson') {
                 const content = document.createElement('p'); content.className = 'lesson-content'; content.innerHTML = screenData.content; contentArea.appendChild(content);
                 if (screenData.example) { const example = document.createElement('div'); example.className = 'lesson-example'; example.textContent = screenData.example; contentArea.appendChild(example); }
@@ -483,7 +606,8 @@
         }
         
         function advanceScreen() {
-            const module = courseMap[0].modules.find(s => s.id === state.activeModule.id);
+            const t = translations[state.lang];
+            const module = t.modules.find(s => s.id === state.activeModule.id);
             if (state.activeModule.screen < module.screens.length - 1) {
                 state.activeModule.screen++; render();
             } else {
@@ -496,8 +620,12 @@
             if (!state.completedModules.includes(state.activeModule.id)) {
                 state.completedModules.push(state.activeModule.id);
             }
-            if (state.completedModules.length === courseMap[0].modules.filter(m=>m.screens.length > 0).length) {
+            gtag('event', 'module_complete', { 'module_id': state.activeModule.id });
+
+            const totalModules = translations[state.lang].modules.filter(m=>m.screens.length > 0).length;
+            if (state.completedModules.length === totalModules) {
                 state.view = 'final';
+                gtag('event', 'level_complete', { 'level_id': 1 });
             } else {
                 state.view = 'map';
                 showTip();
@@ -530,6 +658,7 @@
                 nextButtonContainer.appendChild(nextButton);
             } else {
                 playSound('incorrect');
+                gtag('event', 'answer_incorrect', { 'module_id': state.activeModule.id, 'question': data.question });
                 state.streak = 0;
                 state.activeModule.lives--;
                 button.classList.add('incorrect');
@@ -541,38 +670,41 @@
                     state.view = 'moduleFailed';
                     setTimeout(render, 1500);
                 } else {
-                    const retryButton = createButton('Retry 🔄', () => render());
+                    const retryButton = createButton(translations[state.lang].tryAgain, () => render());
                     nextButtonContainer.appendChild(retryButton);
                 }
             }
             contentArea.appendChild(feedbackSection);
             saveData();
-            updateUI(); // Update UI to show lost life immediately
+            updateUI();
         }
         
         function renderFinalScreen() {
+            const t = translations[state.lang];
             contentArea.innerHTML = '';
             const title = document.createElement('h1');
             title.className = 'completion-title';
-            title.textContent = finalScreenData.title;
+            title.textContent = t.finalTitle;
             contentArea.appendChild(title);
             const content = document.createElement('p');
             content.className = 'lesson-content';
-            content.textContent = finalScreenData.content;
+            content.textContent = t.finalContent;
             contentArea.appendChild(content);
             
             for(let i=0; i<100; i++) { const c = document.createElement('div'); c.className='confetti'; c.style.left=Math.random()*100+'vw'; c.style.animationDuration=Math.random()*2+3+'s'; c.style.backgroundColor=`hsl(${Math.random()*360},100%,50%)`; document.body.appendChild(c); setTimeout(() => { c.remove() }, 5000); }
 
             const formContainer = document.createElement('div');
             formContainer.className = 'waiting-list-container';
-            formContainer.innerHTML = `<p>Want to know when Level 2 is ready?</p><h3>Join the waiting list!</h3>`;
-            const linkButton = createButton('Get Notified 🚀', () => window.open('https://forms.gle/Z1mxcFqR1WZBfxXD9', '_blank'), 'btn-primary');
+            formContainer.innerHTML = `<p>${t.waitingList}</p><h3>${t.waitingListCTA}</h3>`;
+            const linkButton = createButton(t.getNotified, () => window.open('https://forms.gle/Z1mxcFqR1WZBfxXD9', '_blank'), 'btn-primary');
             formContainer.appendChild(linkButton);
             contentArea.appendChild(formContainer);
-            promptBotSpeech.textContent = finalScreenData.promptBot;
+            promptBotSpeech.textContent = t.finalBot;
         }
 
         function renderModuleCompleteScreen() {
+            playSound('moduleComplete');
+            const t = translations[state.lang];
             contentArea.innerHTML = '';
             const icon = document.createElement('div');
             icon.className = 'completion-icon';
@@ -580,13 +712,26 @@
             contentArea.appendChild(icon);
             const title = document.createElement('h2');
             title.className = 'completion-title';
-            title.textContent = 'Module Complete!';
+            title.textContent = t.moduleComplete;
             contentArea.appendChild(title);
-            const continueButton = createButton('Continue to Map', () => completeModule(), 'btn-primary');
+            const continueButton = createButton(t.continueToMap, () => completeModule(), 'btn-primary');
             contentArea.appendChild(continueButton);
+
+            const resetButton = document.createElement('button');
+            resetButton.id = 'reset-progress-btn';
+            resetButton.textContent = t.resetProgress;
+            resetButton.onclick = () => {
+                if(confirm("Are you sure you want to reset all your progress?")) {
+                    localStorage.removeItem('promptCourseProgress');
+                    localStorage.removeItem('promptCourseWelcomed');
+                    location.reload();
+                }
+            };
+            contentArea.appendChild(resetButton);
         }
 
         function renderModuleFailedScreen() {
+            const t = translations[state.lang];
             contentArea.innerHTML = '';
             const icon = document.createElement('div');
             icon.className = 'completion-icon';
@@ -594,17 +739,14 @@
             contentArea.appendChild(icon);
             const title = document.createElement('h2');
             title.className = 'completion-title';
-            title.textContent = 'Out of Tries!';
+            title.textContent = t.outOfTries;
             contentArea.appendChild(title);
             const content = document.createElement('p');
             content.className = 'lesson-content';
-            content.textContent = "Don't worry, practice makes perfect. Let's try this module again from the beginning.";
+            content.textContent = t.outOfTriesMsg;
             contentArea.appendChild(content);
-            const retryButton = createButton('Try Again', () => {
-                state.activeModule.screen = 0;
-                state.activeModule.lives = 3;
-                state.view = 'stage';
-                render();
+            const retryButton = createButton(t.tryAgain, () => {
+                state.view = 'map'; render();
             }, 'btn-primary');
             contentArea.appendChild(retryButton);
         }
@@ -646,13 +788,11 @@
                 const clickedLeft = selected.left;
                 const clickedRight = selected.right;
                 
-                selected.left.classList.remove('selected');
-                selected.right.classList.remove('selected');
-                selected = { left: null, right: null };
-                
                 const originalPair = data.pairs.find(p => p.item1 === clickedLeft.textContent);
                 if (originalPair && originalPair.item2 === clickedRight.textContent) {
+                    playSound('correct');
                     [clickedLeft, clickedRight].forEach(el => {
+                        el.classList.remove('selected');
                         el.classList.add('correct'); 
                         el.disabled = true;
                     });
@@ -661,11 +801,16 @@
                          setTimeout(() => handleAnswer(container, true, data), 300);
                     }
                 } else {
-                    [clickedLeft, clickedRight].forEach(el => el.classList.add('incorrect'));
+                    playSound('incorrect');
+                    [clickedLeft, clickedRight].forEach(el => {
+                        el.classList.remove('selected');
+                        el.classList.add('incorrect');
+                    });
                     setTimeout(() => {
                         [clickedLeft, clickedRight].forEach(el => el.classList.remove('incorrect'));
                     }, 800);
                 }
+                selected = { left: null, right: null };
             };
             left.forEach(text => { const btn = createButton(text, ()=>{ if(selected.left){return;} leftCol.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected')); btn.classList.add('selected'); selected.left=btn; checkMatch(); }, 'matching-pair'); leftCol.appendChild(btn); });
             right.forEach(text => { const btn = createButton(text, ()=>{ if(selected.right){return;} rightCol.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected')); btn.classList.add('selected'); selected.right=btn; checkMatch(); }, 'matching-pair'); rightCol.appendChild(btn); });
@@ -673,28 +818,102 @@
             container.appendChild(rightCol);
         }
         
+        function setLanguage(lang) {
+            state.lang = lang;
+            document.documentElement.lang = lang;
+            updateWelcomeModalText();
+            document.body.classList.toggle('rtl', state.lang === 'he');
+            saveData();
+        }
+
+        function setTheme(theme) {
+            state.theme = theme;
+            document.body.classList.toggle('dark-mode', theme === 'dark');
+            saveData();
+            updateUI();
+        }
+        
+        function updateWelcomeModalText() {
+            const t = translations[state.lang];
+            welcomeTitle.textContent = t.welcomeTitle;
+            welcomeText.textContent = t.welcomeText;
+            startCourseBtn.innerHTML = t.letsGo;
+            modalLangEnBtn.classList.toggle('active', state.lang === 'en');
+            modalLangHeBtn.classList.toggle('active', state.lang === 'he');
+        }
+
+        function showPolicy(type) {
+            const t = translations[state.lang];
+            const contactEmail = '10mvpsin20days@gmail.com';
+            policyTitle.textContent = t[type];
+            let policyContent = `<p>Last updated: June 12, 2024</p><p>Welcome to Learngpt.quest. These are placeholder policies. For any questions, please contact us at <a href="mailto:${contactEmail}">${contactEmail}</a>.</p>`;
+            if (type === 'privacy') {
+                policyContent += `<p>We use Google Analytics to collect anonymous data about website usage to improve our service. You can opt out via the cookie consent banner. We do not sell or share your data.</p>`;
+            } else {
+                policyContent += `<p>By using this service, you agree to use it for educational purposes only. You agree not to reproduce or distribute the content without permission.</p>`;
+            }
+            policyText.innerHTML = policyContent;
+            policyModalOverlay.style.display = 'flex';
+        }
+        
         function init() {
             loadData();
+            setTheme(state.theme); 
+
+            const userLang = navigator.language || navigator.userLanguage; 
+            if (userLang.startsWith('he') && !localStorage.getItem('langSelected')) {
+                state.lang = 'he';
+            }
+
             if (!localStorage.getItem('promptCourseWelcomed')) {
+                updateWelcomeModalText();
                 welcomeModalOverlay.style.display = 'flex';
             } else {
                 render();
+            }
+
+            const cookieConsent = localStorage.getItem('cookieConsent');
+            if (cookieConsent === 'true') {
+                gtag('config', 'G-W265SV9J0L');
+            } else if (!cookieConsent) {
+                const t = translations[state.lang];
+                cookieText.textContent = t.cookieText;
+                acceptCookiesBtn.textContent = t.accept;
+                declineCookiesBtn.textContent = t.decline;
+                cookieBanner.style.display = 'flex';
             }
             
             startCourseBtn.addEventListener('click', () => {
                 welcomeModalOverlay.style.display = 'none';
                 localStorage.setItem('promptCourseWelcomed', 'true');
+                localStorage.setItem('langSelected', 'true');
                 render();
             });
             const firstInteraction = () => { initAudio(); document.body.removeEventListener('click', firstInteraction); document.body.removeEventListener('touchstart', firstInteraction); };
             document.body.addEventListener('click', firstInteraction);
             document.body.addEventListener('touchstart', firstInteraction);
             soundToggle.addEventListener('click', () => { initAudio(); state.isMuted = !state.isMuted; updateUI(); saveData(); });
+            themeToggle.addEventListener('click', () => setTheme(state.theme === 'light' ? 'dark' : 'light'));
             closeTipBtn.addEventListener('click', () => { tipModalOverlay.style.display = 'none'; });
+            modalLangEnBtn.addEventListener('click', () => setLanguage('en'));
+            modalLangHeBtn.addEventListener('click', () => setLanguage('he'));
+            
+            acceptCookiesBtn.addEventListener('click', () => {
+                localStorage.setItem('cookieConsent', 'true');
+                cookieBanner.style.display = 'none';
+                gtag('config', 'G-W265SV9J0L');
+            });
+            declineCookiesBtn.addEventListener('click', () => {
+                localStorage.setItem('cookieConsent', 'false');
+                cookieBanner.style.display = 'none';
+            });
+            termsLink.addEventListener('click', (e) => { e.preventDefault(); showPolicy('terms'); });
+            privacyLink.addEventListener('click', (e) => { e.preventDefault(); showPolicy('privacy'); });
+            closePolicyBtn.addEventListener('click', () => { policyModalOverlay.style.display = 'none'; });
         }
         
         init();
     </script>
 </body>
 </html>
-
+�
