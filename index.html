@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Engineering 101</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --green: #58cc02;
+            --light-green: #89e219;
+            --yellow: #ffc800;
+            --blue: #1cb0f6;
+            --red: #ff4b4b;
+            --light-red: #ff8989;
+            --white: #ffffff;
+            --gray-100: #f7f7f7;
+            --gray-200: #e5e5e5;
+            --gray-300: #afafaf;
+            --gray-400: #777777;
+            --gray-500: #4b4b4b;
+            --font-family: 'Nunito', sans-serif;
+            --border-radius: 16px;
+            --shadow: 0 4px 0 #00000020;
+            --button-height: 60px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: linear-gradient(180deg, var(--gray-100) 0%, #dbeeff 100%);
+            color: var(--gray-500);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        #app-wrapper {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header & Progress --- */
+        header {
+            width: 100%;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .xp-display, .lives-display {
+            font-weight: 900;
+            font-size: 1.2rem;
+            color: var(--yellow);
+            text-shadow: 1px 1px 2px #00000030;
+        }
+        .lives-display { color: var(--red); }
+        .header-left, .header-right { display: flex; align-items: center; gap: 1rem; }
+
+        .sound-toggle {
+            font-size: 1.5rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 20px;
+            background-color: var(--gray-200);
+            border-radius: 10px;
+            border: 2px solid var(--gray-200);
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--light-green), var(--green));
+            border-radius: 8px;
+            transition: width 0.5s ease-out;
+        }
+        
+        /* --- Main Content & Map --- */
+        #content-area {
+            flex-grow: 1;
+            width: 100%;
+            padding: 1.5rem;
+            background: var(--white);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 8px 24px #0000001a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 400px;
+        }
+
+        .map-view {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            padding: 2rem 0;
+        }
+
+        .stage-node {
+            position: relative;
+        }
+
+        .stage-button {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 8px solid var(--white);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 var(--gray-300);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stage-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 2px 0 var(--gray-300);
+        }
+
+        .stage-icon { font-size: 2.5rem; }
+        .stage-title-map { font-size: 0.9rem; margin-top: 5px; }
+
+        .stage-button.unlocked {
+            background: var(--green);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 #3a8a00;
+            animation: pulse 1.5s infinite;
+        }
+        .stage-button.completed {
+            background: var(--yellow);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 #c79a00;
+        }
+        .stage-button.locked {
+            background: var(--gray-200);
+            color: var(--gray-300);
+            cursor: not-allowed;
+            box-shadow: 0 4px 0 var(--gray-300);
+        }
+
+        .promptbot-map-icon {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            bottom: -25px;
+            left: -40px;
+            transform: rotate(-15deg);
+            transition: all 0.5s ease-in-out;
+        }
+        
+        .level-title {
+            width: 100%;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--gray-400);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .screen-title, .completion-title {
+            font-size: 1.8rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .completion-icon {
+            font-size: 4rem;
+            animation: bounce-in 0.5s ease-out;
+        }
+
+        .lesson-content, .exercise-question {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .lesson-example {
+            width: 100%;
+            padding: 1rem;
+            background: var(--gray-100);
+            border-left: 5px solid var(--blue);
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            font-style: italic;
+        }
+
+        .btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: var(--button-height); font-family: var(--font-family); font-weight: 700; font-size: 1.1rem; color: var(--gray-400); background-color: var(--white); border: 2px solid var(--gray-200); border-radius: var(--border-radius); cursor: pointer; padding: 0.5rem 1rem; text-align: center; box-shadow: var(--shadow); transition: transform 0.1s ease, box-shadow 0.1s ease; }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 #00000020; }
+        .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #00000020; }
+        .btn:disabled { cursor: not-allowed; color: var(--gray-300); }
+        .btn-primary { background-color: var(--green); color: var(--white); border-color: var(--green); font-weight: 900; font-size: 1.5rem; }
+        .btn-primary:hover:not(:disabled) { background-color: var(--light-green); border-color: var(--light-green); }
+        .btn.correct { background-color: var(--green); border-color: var(--green); color: white; animation: bounce 0.5s; }
+        .btn.incorrect { background-color: var(--light-red); border-color: var(--light-red); color: white; }
+        
+        footer { width: 100%; position: relative; margin-top: 1rem; padding: 1rem 0; }
+        .promptbot-container { display: flex; align-items: flex-end; gap: 10px; }
+        #promptbot-svg { width: 60px; height: auto; flex-shrink: 0; }
+        .speech-bubble { position: relative; background: var(--white); border-radius: var(--border-radius); padding: 1rem; font-weight: 700; box-shadow: var(--shadow); border: 2px solid var(--gray-200); width: 100%; }
+        .speech-bubble::before { content: ''; position: absolute; left: -10px; bottom: 15px; width: 0; height: 0; border: 10px solid transparent; border-right-color: var(--white); border-left: 0; border-bottom: 0; margin-top: -5px; margin-left: -10px; }
+        
+        #feedback-section { width: 100%; text-align: center; padding: 1rem; }
+        .feedback-message { min-height: 80px; border-radius: var(--border-radius); padding: 1rem; margin-bottom: 1rem; font-weight: 700; font-size: 1.2rem; display: none; }
+        .feedback-message.correct { display: block; background: #e1f9d3; color: #3a8a00; border-left: 5px solid var(--green); }
+        .feedback-message.incorrect { display: block; background: #ffebee; color: #c00c00; border-left: 5px solid var(--red); }
+        #next-button-container { margin-top: 1rem; width: 100%; max-width: 300px; }
+
+        .matching-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .matching-pair { min-height: var(--button-height); display: flex; align-items: center; justify-content: center; padding: 0.75rem; border: 2px solid var(--gray-200); border-radius: var(--border-radius); box-shadow: var(--shadow); cursor: grab; user-select: none; background: white; }
+        .matching-pair.selected { background: var(--blue); color: white; border-color: var(--blue); }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: white; padding: 2rem; border-radius: var(--border-radius); max-width: 90%; width: 400px; text-align: center; animation: bounce-in 0.4s; }
+        .modal h3 { margin-top: 0; color: var(--blue); }
+        .modal .btn { margin-top: 1.5rem; }
+        
+        .waiting-list-container { text-align:center; padding: 2rem; border: 2px dashed var(--blue); border-radius: var(--border-radius); margin-top: 2rem; }
+        .waiting-list-container p { font-size: 1.1rem; }
+
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        @keyframes bounce-in { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .confetti { position: fixed; top: -10px; width: 10px; height: 10px; opacity: 0.8; animation: fall 3s linear infinite; }
+        @keyframes fall { to { transform: translateY(100vh); opacity: 0; } }
+        
+        @media (max-width: 600px) { body { padding: 0.5rem; } #content-area { padding: 1rem; } .screen-title { font-size: 1.5rem; } .lesson-content, .exercise-question { font-size: 1rem; } .btn { font-size: 1rem; } .matching-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div id="welcome-modal-overlay" class="modal-overlay">
+        <div class="modal">
+            <h3>Welcome to Prompting 101!</h3>
+            <p>This is a short, interactive course to help you get better results from AI tools like ChatGPT. Learn to write clearer prompts to unlock the AI's full potential.</p>
+            <button id="start-course-btn" class="btn btn-primary">Let's Go! 🚀</button>
+        </div>
+    </div>
+    <div id="tip-modal-overlay" class="modal-overlay">
+        <div id="tip-modal" class="modal">
+            <h3>💡 Tip from PromptBot!</h3>
+            <p id="tip-text"></p>
+            <button id="close-tip-btn" class="btn btn-primary">Got it!</button>
+        </div>
+    </div>
+    <div id="app-wrapper">
+        <header>
+            <div class="header-controls">
+                <div class="header-left">
+                     <div class="xp-display">💎 0 XP</div>
+                </div>
+                <div class="header-right">
+                    <div id="lives-display" class="lives-display"></div>
+                    <button id="sound-toggle" class="sound-toggle">🔊</button>
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+        </header>
+
+        <main id="content-area">
+            <!-- Content will be rendered by the script -->
+        </main>
+
+        <footer>
+            <div class="promptbot-container">
+                <svg id="promptbot-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <g>
+                        <rect x="10" y="30" width="80" height="60" rx="15" fill="#1cb0f6"/> <rect x="25" y="88" width="15" height="12" fill="#777777"/> <rect x="60" y="88" width="15" height="12" fill="#777777"/> <circle cx="35" cy="55" r="10" fill="white"/> <circle cx="35" cy="55" r="5" fill="#4b4b4b"/> <circle cx="65" cy="55" r="10" fill="white"/> <circle cx="65" cy="55" r="5" fill="#4b4b4b"/> <path d="M35 75 Q 50 80, 65 75" stroke="#ffffff" stroke-width="3" fill="none"/> <rect x="45" y="20" width="10" height="15" rx="3" fill="#ffc800"/> <circle cx="50" cy="15" r="5" fill="#ffc800"/>
+                    </g>
+                </svg>
+                <div id="promptbot-speech" class="speech-bubble">
+                    Welcome! Select a module to start.
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        const contentArea = document.getElementById('content-area');
+        const progressBar = document.getElementById('progress-bar');
+        const xpDisplay = document.querySelector('.xp-display');
+        const livesDisplay = document.getElementById('lives-display');
+        const soundToggle = document.getElementById('sound-toggle');
+        const promptBotSpeech = document.getElementById('promptbot-speech');
+        const welcomeModalOverlay = document.getElementById('welcome-modal-overlay');
+        const startCourseBtn = document.getElementById('start-course-btn');
+        const tipModalOverlay = document.getElementById('tip-modal-overlay');
+        const tipText = document.getElementById('tip-text');
+        const closeTipBtn = document.getElementById('close-tip-btn');
+
+        let audioCtx;
+        function initAudio() { if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { console.error("Web Audio API not supported."); } } }
+        function playSound(type) {
+            if (!audioCtx || state.isMuted) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.connect(g); g.connect(audioCtx.destination);
+            if (type === 'correct') { o.type = 'sine'; o.frequency.setValueAtTime(600, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1); g.gain.setValueAtTime(0.2, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2); o.start(); o.stop(audioCtx.currentTime + 0.2); }
+            else if (type === 'incorrect') { o.type = 'square'; o.frequency.setValueAtTime(200, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2); g.gain.setValueAtTime(0.2, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3); o.start(); o.stop(audioCtx.currentTime + 0.3); }
+            else if (type === 'streak') { const notes = [600, 750, 900]; g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4); notes.forEach((n, i) => { const o2 = audioCtx.createOscillator(); o2.connect(g); o2.type = 'triangle'; o2.frequency.setValueAtTime(n, audioCtx.currentTime + i * 0.1); o2.start(audioCtx.currentTime + i * 0.1); o2.stop(audioCtx.currentTime + i * 0.1 + 0.1); }); }
+        }
+
+        let state = {};
+        const defaultState = {
+            view: 'map',
+            activeModule: { id: null, screen: 0, lives: 3 },
+            xp: 0,
+            streak: 0,
+            isMuted: false,
+            completedModules: []
+        };
+        
+        const tips = [
+            "Don't be afraid to say 'please' and 'thank you'. Politeness can sometimes improve the AI's tone!",
+            "If the AI refuses a request, try rephrasing it. Sometimes a small change makes a big difference.",
+            "Using bullet points or numbered lists in your prompt can help organize the AI's thoughts.",
+            "You can set a word limit! Try adding 'in 50 words or less' to your next prompt for a concise answer."
+        ];
+        
+        const courseMap = [{
+            level: 1, title: "Foundations of Prompt Engineering", modules: [
+                { id: 1, title: "The Basics", icon: "💡", screens: [
+                    { type: 'lesson', title: 'What is a Prompt?', content: "A prompt is an instruction for an AI. Think of it like asking a smart assistant for help. Clear instructions get the best results." },
+                    { type: 'exercise', subType: 'mcq', question: "Which is a prompt?", options: [{text: 'blue sky', correct: false}, {text: 'Tell me a joke', correct: true}, {text: 'Photos of cats', correct: false}], feedback: {correct: "Exactly! A prompt is a command or question.", incorrect: "A prompt is a direct instruction, not just a topic."} },
+                    { type: 'exercise', subType: 'mcq', question: "An AI is best at...", options: [{text: 'Having feelings', correct: false}, {text: 'Following instructions', correct: true}, {text: 'Making its own decisions', correct: false}], feedback: {correct: "Correct! AI excels at following your instructions precisely.", incorrect: "AI doesn't have feelings or make its own choices; it follows commands."} },
+                    { type: 'lesson', title: 'Right vs. Wrong Prompts', content: "A good prompt is a clear, complete sentence. A bad prompt is often just one or two vague words.", example: "Right: 'List three benefits of regular exercise.'\nWrong: 'exercise benefits'" },
+                    { type: 'exercise', subType: 'ab-test', question: "Which prompt is better?", options: [{text: 'Tell me about the Roman Empire.', correct: false}, {text: 'Summarize the key events of the Roman Empire.', correct: true}], feedback: {correct: "Yes! A specific verb like 'summarize' gives the AI a clear task.", incorrect: "'Summarize' is a better instruction than 'Tell me about'."} },
+                    { type: 'exercise', subType: 'mcq', question: "What's the goal of a good prompt?", options: [{text: 'To be short', correct: false}, {text: 'To be confusing', correct: false}, {text: 'To be clear and specific', correct: true}], feedback: {correct: "You got it! Clarity is the most important thing.", incorrect: "The main goal is always to be as clear as possible."} },
+                ]},
+                { id: 2, title: "Refining", icon: "⚙️", screens: [
+                    { type: 'lesson', title: 'The Power of Specificity', content: "Adding details helps the AI narrow down the possibilities. The more specific you are, the closer you'll get to the perfect answer.", example: "Good: 'Write a recipe.'\nBetter: 'Write a simple recipe for vegan chocolate chip cookies.'" },
+                    { type: 'exercise', subType: 'ab-test', question: "Which prompt is more specific?", options: [{text: 'Plan a trip to France for a foodie.', correct: false}, {text: 'Plan a 3-day trip to Lyon, France focused on local cuisine.', correct: true}], feedback: {correct: "Perfect! Details like location and focus lead to a more helpful plan.", incorrect: "The second prompt is much more specific and will get a better result."} },
+                    { type: 'exercise', subType: 'matching', question: "Match the goal to a helpful detail.", pairs: [{item1: 'Get a recipe', item2: 'for a beginner'}, {item1: 'Write a story', item2: 'about a space pirate'}, {item1: 'Plan a workout', item2: 'for my legs'}], feedback: {correct: "Great matches! Those details make a huge difference.", incorrect: "Try to match the detail that makes the goal clearer."} },
+                    { type: 'lesson', title: 'Giving Helpful Context', content: "Context is the background information the AI needs. Tell it who you are or what the situation is.", example: "Without Context: 'What are 3 easy songs to learn?'\nWith Context: 'I'm a beginner guitarist. What are 3 easy songs to learn?'" },
+                    { type: 'exercise', subType: 'ab-test', question: "Which prompt gives better context?", options: [{text: 'Write a professional email to my boss.', correct: false}, {text: 'Write a professional email to my boss requesting Friday off.', correct: true}], feedback: {correct: "Excellent! Now the AI knows the purpose of the email.", incorrect: "The second prompt is better because it explains the *reason* for the email."} },
+                    { type: 'exercise', subType: 'mcq', question: "You want a book recommendation. What's the most helpful context to add?", options: [{text: 'I like books', correct: false}, {text: 'I enjoyed the book "Dune"', correct: true}, {text: 'I read a lot', correct: false}], feedback: {correct: "Yes! Naming a specific book you liked gives the AI a perfect starting point.", incorrect: "Giving a specific example of what you like is the best context."} },
+                ]},
+                { id: 3, title: "Roles", icon: "🎭", screens: [
+                     { type: 'lesson', title: "Give the AI a 'Role'", content: "Telling the AI to 'act as' a certain expert is a power move. This changes the style and content of the answer.", example: "'Act as a pirate...' will give a very different answer than 'Act as a scientist...'" },
+                     { type: 'exercise', subType: 'mcq', question: "To get a fun, rhyming answer, you could say:", options: [{text: "'Act as a historian'", correct: false}, {text: "'Act as a poet'", correct: true}, {text: "'Act as an accountant'", correct: false}], feedback: {correct: "Great choice! A poet is the perfect role for that task.", incorrect: "A poet would be the best role for creating rhyming content."} },
+                     { type: 'lesson', title: 'Define the Output Format', content: "Be explicit about how you want your answer. Do you want a list? A table? A single paragraph? Just ask!", example: "'List the pros and cons in a two-column table.'" },
+                     { type: 'exercise', subType: 'mcq', question: "Which prompt asks for a specific format?", options: [{text: "'Compare cats and dogs.'", correct: false}, {text: "'Write about cats and dogs.'", correct: false}, {text: "'Put the differences between cats and dogs in a bulleted list.'", correct: true}], feedback: {correct: "Correct! Specifying 'a bulleted list' is great output formatting.", incorrect: "The best prompt is the one that explicitly asks for a certain format, like a list."} },
+                     { type: 'exercise', subType: 'ab-test', question: "Which is the BEST prompt?", options: [{text: 'Explain black holes as a teacher.', correct: false}, {text: 'Act as a science teacher and explain black holes to a 10-year-old in three paragraphs.', correct: true}], feedback: {correct: "Perfect! It combines a role, context (for a 10-year-old), and output format (three paragraphs).", incorrect: "Prompt B is the strongest because it uses a role, gives context, and defines the output format."} },
+                     { type: 'exercise', subType: 'mcq', question: "To get a short answer, you can add:", options: [{text: "'Make it long'", correct: false}, {text: "'in 25 words or less'", correct: true}, {text: "'Use big words'", correct: false}], feedback: {correct: "That's right! Setting a word count is a powerful way to control the output.", incorrect: "Specifying a word count is the clearest way to ask for a short answer."} },
+                ]},
+                { id: 4, title: "Locked", icon: "🔒", screens: [] },
+                { id: 5, title: "Locked", icon: "🔒", screens: [] },
+            ]
+        }];
+        const finalScreenData = { type: 'final', title: 'Level 1 Complete! 🎉', content: "Congratulations! You've completed Level 1. You now have the skills to write clearer, more effective prompts. Keep practicing!", promptBot: "You're a prompt legend! 🏆" };
+
+        function saveData() { localStorage.setItem('promptCourseProgress', JSON.stringify(state)); }
+        function loadData() { const savedData = localStorage.getItem('promptCourseProgress'); state = savedData ? { ...defaultState, ...JSON.parse(savedData) } : { ...defaultState }; }
+        function createButton(text, onClick, extraClass = '') { const btn = document.createElement('button'); btn.innerHTML = text; btn.className = `btn ${extraClass}`; btn.onclick = onClick; return btn; }
+        
+        function updateUI() { 
+            const totalModules = courseMap[0].modules.filter(m=>m.screens.length > 0).length;
+            let progressPercentage = totalModules > 0 ? (state.completedModules.length / totalModules) * 100 : 0;
+            
+            livesDisplay.style.display = 'none';
+            
+            if (state.view === 'stage') {
+                const module = courseMap[0].modules.find(s => s.id === state.activeModule.id);
+                progressPercentage = module.screens.length > 0 ? (state.activeModule.screen / module.screens.length) * 100 : 0;
+                livesDisplay.innerHTML = `💡&nbsp;`.repeat(state.activeModule.lives);
+                livesDisplay.style.display = 'block';
+            }
+            
+            progressBar.style.width = `${progressPercentage}%`;
+            xpDisplay.innerHTML = `💎 ${state.xp} XP`; 
+            soundToggle.textContent = state.isMuted ? '🔇' : '🔊'; 
+        }
+
+        function render() {
+            updateUI();
+            contentArea.innerHTML = '';
+            const view = state.view;
+            if (view === 'map') renderMapView();
+            else if (view === 'stage') renderModuleView();
+            else if (view === 'moduleComplete') renderModuleCompleteScreen();
+            else if (view === 'moduleFailed') renderModuleFailedScreen();
+            else if (view === 'final') renderFinalScreen();
+        }
+
+        function showTip() {
+            if (Math.random() < 0.25) {
+                const randomTip = tips[Math.floor(Math.random() * tips.length)];
+                tipText.textContent = randomTip;
+                tipModalOverlay.style.display = 'flex';
+            }
+        }
+
+        function renderMapView() {
+            const level = courseMap[0];
+            const mapView = document.createElement('div');
+            mapView.className = 'map-view';
+            mapView.innerHTML = `<h2 class="level-title">${level.title}</h2>`;
+            level.modules.forEach(module => {
+                if (!module.screens || module.screens.length === 0) return;
+                const node = document.createElement('div');
+                node.className = 'stage-node';
+                const isCompleted = state.completedModules.includes(module.id);
+                const isUnlocked = state.completedModules.length + 1 === module.id;
+                const isLocked = !isCompleted && !isUnlocked;
+                const button = document.createElement('button');
+                button.className = 'stage-button';
+                if(isCompleted) button.classList.add('completed');
+                if(isUnlocked) button.classList.add('unlocked');
+                if(isLocked) button.classList.add('locked');
+                button.disabled = isLocked;
+                button.innerHTML = `<div class="stage-icon">${isCompleted ? '⭐' : module.icon}</div><div class="stage-title-map">${module.title}</div>`;
+                button.onclick = () => { state.view = 'stage'; state.activeModule = { id: module.id, screen: 0, lives: 3 }; render(); };
+                if (isUnlocked) {
+                    const botIcon = document.createElement('div');
+                    botIcon.className = 'promptbot-map-icon';
+                    botIcon.innerHTML = `<svg viewBox="0 0 100 100"><g><rect x="10" y="30" width="80" height="60" rx="15" fill="#1cb0f6"/><rect x="25" y="88" width="15" height="12" fill="#777777"/><rect x="60" y="88" width="15" height="12" fill="#777777"/><circle cx="35" cy="55" r="10" fill="white"/><circle cx="35" cy="55" r="5" fill="#4b4b4b"/><circle cx="65" cy="55" r="10" fill="white"/><circle cx="65" cy="55" r="5" fill="#4b4b4b"/><path d="M35 75 Q 50 80, 65 75" stroke="#ffffff" stroke-width="3" fill="none"/><rect x="45" y="20" width="10" height="15" rx="3" fill="#ffc800"/><circle cx="50" cy="15" r="5" fill="#ffc800"/></g></svg>`;
+                    node.appendChild(botIcon);
+                }
+                node.appendChild(button);
+                mapView.appendChild(node);
+            });
+            contentArea.appendChild(mapView);
+            promptBotSpeech.textContent = "Great job! Select the next module to continue learning.";
+        }
+
+        function renderModuleView() {
+            const module = courseMap[0].modules.find(s => s.id === state.activeModule.id);
+            if (!module) return;
+            const screenData = module.screens[state.activeModule.screen];
+            const title = document.createElement('h1');
+            title.className = 'screen-title';
+            title.textContent = screenData.title;
+            contentArea.appendChild(title);
+            promptBotSpeech.textContent = "Let's give it a shot!";
+            if (screenData.type === 'lesson') {
+                const content = document.createElement('p'); content.className = 'lesson-content'; content.innerHTML = screenData.content; contentArea.appendChild(content);
+                if (screenData.example) { const example = document.createElement('div'); example.className = 'lesson-example'; example.textContent = screenData.example; contentArea.appendChild(example); }
+                const nextButton = createButton('Continue', () => advanceScreen(), 'btn-primary');
+                contentArea.appendChild(nextButton);
+            } else if (screenData.type === 'exercise') {
+                renderExerciseScreen(screenData);
+            }
+        }
+        
+        function advanceScreen() {
+            const module = courseMap[0].modules.find(s => s.id === state.activeModule.id);
+            if (state.activeModule.screen < module.screens.length - 1) {
+                state.activeModule.screen++; render();
+            } else {
+                state.view = 'moduleComplete';
+                render();
+            }
+        }
+        
+        function completeModule() {
+            if (!state.completedModules.includes(state.activeModule.id)) {
+                state.completedModules.push(state.activeModule.id);
+            }
+            if (state.completedModules.length === courseMap[0].modules.filter(m=>m.screens.length > 0).length) {
+                state.view = 'final';
+            } else {
+                state.view = 'map';
+                showTip();
+            }
+            saveData();
+            render();
+        }
+
+        function handleAnswer(button, isCorrect, data) {
+            contentArea.querySelectorAll('button').forEach(b => b.disabled = true);
+            const feedbackSection = document.createElement('div');
+            const nextButtonContainer = document.createElement('div');
+            feedbackSection.id = 'feedback-section';
+            feedbackSection.innerHTML = `<div class="feedback-message"></div>`;
+            nextButtonContainer.id = 'next-button-container';
+            feedbackSection.appendChild(nextButtonContainer);
+            const feedbackMessage = feedbackSection.querySelector('.feedback-message');
+            
+            if (isCorrect) {
+                playSound('correct');
+                state.xp += 10;
+                state.streak++;
+                button.classList.add('correct');
+                feedbackMessage.textContent = data.feedback.correct;
+                feedbackMessage.className = 'feedback-message correct';
+                if (state.streak >= 6) { promptBotSpeech.textContent = "Legend! 🏆"; playSound('streak'); }
+                else if (state.streak >= 3) { promptBotSpeech.textContent = "Hot Streak! 🔥"; playSound('streak'); }
+                else { promptBotSpeech.textContent = "You got it!"; }
+                const nextButton = createButton('Continue', () => advanceScreen(), 'btn-primary');
+                nextButtonContainer.appendChild(nextButton);
+            } else {
+                playSound('incorrect');
+                state.streak = 0;
+                state.activeModule.lives--;
+                button.classList.add('incorrect');
+                feedbackMessage.textContent = data.feedback.incorrect;
+                feedbackMessage.className = 'feedback-message incorrect';
+                promptBotSpeech.textContent = "Don't worry, try makes perfect!";
+
+                if (state.activeModule.lives <= 0) {
+                    state.view = 'moduleFailed';
+                    setTimeout(render, 1500);
+                } else {
+                    const retryButton = createButton('Retry 🔄', () => render());
+                    nextButtonContainer.appendChild(retryButton);
+                }
+            }
+            contentArea.appendChild(feedbackSection);
+            saveData();
+            updateUI(); // Update UI to show lost life immediately
+        }
+        
+        function renderFinalScreen() {
+            contentArea.innerHTML = '';
+            const title = document.createElement('h1');
+            title.className = 'completion-title';
+            title.textContent = finalScreenData.title;
+            contentArea.appendChild(title);
+            const content = document.createElement('p');
+            content.className = 'lesson-content';
+            content.textContent = finalScreenData.content;
+            contentArea.appendChild(content);
+            
+            for(let i=0; i<100; i++) { const c = document.createElement('div'); c.className='confetti'; c.style.left=Math.random()*100+'vw'; c.style.animationDuration=Math.random()*2+3+'s'; c.style.backgroundColor=`hsl(${Math.random()*360},100%,50%)`; document.body.appendChild(c); setTimeout(() => { c.remove() }, 5000); }
+
+            const formContainer = document.createElement('div');
+            formContainer.className = 'waiting-list-container';
+            formContainer.innerHTML = `<p>Want to know when Level 2 is ready?</p><h3>Join the waiting list!</h3>`;
+            const linkButton = createButton('Get Notified 🚀', () => window.open('https://forms.gle/Z1mxcFqR1WZBfxXD9', '_blank'), 'btn-primary');
+            formContainer.appendChild(linkButton);
+            contentArea.appendChild(formContainer);
+            promptBotSpeech.textContent = finalScreenData.promptBot;
+        }
+
+        function renderModuleCompleteScreen() {
+            contentArea.innerHTML = '';
+            const icon = document.createElement('div');
+            icon.className = 'completion-icon';
+            icon.textContent = '🎉';
+            contentArea.appendChild(icon);
+            const title = document.createElement('h2');
+            title.className = 'completion-title';
+            title.textContent = 'Module Complete!';
+            contentArea.appendChild(title);
+            const continueButton = createButton('Continue to Map', () => completeModule(), 'btn-primary');
+            contentArea.appendChild(continueButton);
+        }
+
+        function renderModuleFailedScreen() {
+            contentArea.innerHTML = '';
+            const icon = document.createElement('div');
+            icon.className = 'completion-icon';
+            icon.textContent = '💔';
+            contentArea.appendChild(icon);
+            const title = document.createElement('h2');
+            title.className = 'completion-title';
+            title.textContent = 'Out of Tries!';
+            contentArea.appendChild(title);
+            const content = document.createElement('p');
+            content.className = 'lesson-content';
+            content.textContent = "Don't worry, practice makes perfect. Let's try this module again from the beginning.";
+            contentArea.appendChild(content);
+            const retryButton = createButton('Try Again', () => {
+                state.activeModule.screen = 0;
+                state.activeModule.lives = 3;
+                state.view = 'stage';
+                render();
+            }, 'btn-primary');
+            contentArea.appendChild(retryButton);
+        }
+
+        function renderExerciseScreen(data) {
+            const question = document.createElement('p'); question.className = 'exercise-question'; question.textContent = data.question; contentArea.appendChild(question);
+            const choiceContainer = document.createElement('div');
+            switch(data.subType) {
+                case 'mcq': case 'ab-test':
+                    choiceContainer.className = 'choice-grid';
+                    data.options.forEach(option => { 
+                        const btn = createButton(option.text, () => handleAnswer(btn, option.correct, data));
+                        choiceContainer.appendChild(btn);
+                     });
+                    break;
+                case 'matching':
+                     choiceContainer.className = 'matching-grid';
+                     renderMatchingExercise(choiceContainer, data);
+                     break;
+            }
+            contentArea.appendChild(choiceContainer);
+        }
+
+        function renderMatchingExercise(container, data) {
+            const {left, right} = {left: [], right: []};
+            [...data.pairs].sort(() => Math.random() - 0.5).forEach(p => { left.push(p.item1); right.push(p.item2); });
+            right.sort(() => Math.random() - 0.5);
+
+            const leftCol = document.createElement('div');
+            const rightCol = document.createElement('div');
+            [leftCol, rightCol].forEach(c => { c.style.display = 'flex'; c.style.flexDirection = 'column'; c.style.gap = '0.5rem'; });
+            
+            let selected = { left: null, right: null };
+            let correctPairs = 0;
+
+            const checkMatch = () => {
+                if (!selected.left || !selected.right) return;
+                
+                const clickedLeft = selected.left;
+                const clickedRight = selected.right;
+                
+                selected.left.classList.remove('selected');
+                selected.right.classList.remove('selected');
+                selected = { left: null, right: null };
+                
+                const originalPair = data.pairs.find(p => p.item1 === clickedLeft.textContent);
+                if (originalPair && originalPair.item2 === clickedRight.textContent) {
+                    [clickedLeft, clickedRight].forEach(el => {
+                        el.classList.add('correct'); 
+                        el.disabled = true;
+                    });
+                    correctPairs++;
+                    if (correctPairs === data.pairs.length) {
+                         setTimeout(() => handleAnswer(container, true, data), 300);
+                    }
+                } else {
+                    [clickedLeft, clickedRight].forEach(el => el.classList.add('incorrect'));
+                    setTimeout(() => {
+                        [clickedLeft, clickedRight].forEach(el => el.classList.remove('incorrect'));
+                    }, 800);
+                }
+            };
+            left.forEach(text => { const btn = createButton(text, ()=>{ if(selected.left){return;} leftCol.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected')); btn.classList.add('selected'); selected.left=btn; checkMatch(); }, 'matching-pair'); leftCol.appendChild(btn); });
+            right.forEach(text => { const btn = createButton(text, ()=>{ if(selected.right){return;} rightCol.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected')); btn.classList.add('selected'); selected.right=btn; checkMatch(); }, 'matching-pair'); rightCol.appendChild(btn); });
+            container.appendChild(leftCol);
+            container.appendChild(rightCol);
+        }
+        
+        function init() {
+            loadData();
+            if (!localStorage.getItem('promptCourseWelcomed')) {
+                welcomeModalOverlay.style.display = 'flex';
+            } else {
+                render();
+            }
+            
+            startCourseBtn.addEventListener('click', () => {
+                welcomeModalOverlay.style.display = 'none';
+                localStorage.setItem('promptCourseWelcomed', 'true');
+                render();
+            });
+            const firstInteraction = () => { initAudio(); document.body.removeEventListener('click', firstInteraction); document.body.removeEventListener('touchstart', firstInteraction); };
+            document.body.addEventListener('click', firstInteraction);
+            document.body.addEventListener('touchstart', firstInteraction);
+            soundToggle.addEventListener('click', () => { initAudio(); state.isMuted = !state.isMuted; updateUI(); saveData(); });
+            closeTipBtn.addEventListener('click', () => { tipModalOverlay.style.display = 'none'; });
+        }
+        
+        init();
+    </script>
+</body>
+</html>
+
