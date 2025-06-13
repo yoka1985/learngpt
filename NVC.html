@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nonviolent Communication Basics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --green: #58cc02;
+            --light-green: #89e219;
+            --yellow: #ffc800;
+            --blue: #1cb0f6;
+            --light-blue: #88d4f8;
+            --red: #ff4b4b;
+            --light-red: #ff8989;
+            --border-radius: 16px;
+            --button-height: 60px;
+
+            /* Light Theme */
+            --bg-primary: #f7f7f7;
+            --bg-secondary: #ffffff;
+            --text-primary: #4b4b4b;
+            --text-secondary: #777777;
+            --border-color: #e5e5e5;
+            --shadow-color: #00000020;
+        }
+        
+        body.dark-mode {
+            /* Dark Theme */
+            --bg-primary: #121212;
+            --bg-secondary: #1E1E1E;
+            --text-primary: #E0E0E0;
+            --text-secondary: #A0A0A0;
+            --border-color: #333333;
+            --shadow-color: #00000040;
+        }
+
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 1rem;
+            overflow-y: auto;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        body.rtl { direction: rtl; }
+
+        #app-wrapper {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header & Progress --- */
+        header {
+            width: 100%;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .xp-display, .lives-display {
+            font-weight: 900;
+            font-size: 1.2rem;
+            color: var(--yellow);
+            text-shadow: 1px 1px 2px #00000030;
+        }
+        .lives-display { color: var(--red); letter-spacing: 0.2em; }
+        .header-left, .header-right { display: flex; align-items: center; gap: 1rem; }
+
+        .sound-toggle, .theme-toggle, .lang-toggle {
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+        }
+        .lang-toggle.active { color: var(--blue); text-decoration: underline;}
+
+
+        .progress-bar-container {
+            width: 100%;
+            height: 20px;
+            background-color: var(--border-color);
+            border-radius: 10px;
+            border: 2px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--light-blue), var(--blue));
+            border-radius: 8px;
+            transition: width 0.5s ease-out;
+        }
+        
+        /* --- Main Content & Map --- */
+        #content-area {
+            flex-grow: 1;
+            width: 100%;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 24px #0000001a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 400px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .map-view {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            padding: 2rem 0;
+        }
+
+        .stage-node { position: relative; }
+
+        .stage-button {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 8px solid var(--bg-secondary);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s, color 0.3s;
+        }
+        .stage-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 2px 0 var(--border-color);
+        }
+
+        .stage-icon { font-size: 2.5rem; }
+        .stage-title-map { font-size: 0.9rem; margin-top: 5px; }
+
+        .stage-button.unlocked { background: var(--blue); color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 #0d7ab3; animation: pulse 1.5s infinite; }
+        .stage-button.completed { background: var(--green); color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 #3a8a00; }
+        .stage-button.locked { background: var(--border-color); color: var(--text-secondary); cursor: not-allowed; }
+        
+        .giraffe-map-icon { position: absolute; width: 60px; height: 60px; bottom: -30px; left: -50px; transform: rotate(-15deg); transition: all 0.5s ease-in-out; }
+        body.rtl .giraffe-map-icon { left: auto; right: -50px; transform: rotate(15deg); }
+        
+        .level-title { width: 100%; text-align: center; font-size: 1.5rem; font-weight: 900; color: var(--text-secondary); padding-bottom: 1rem; margin-bottom: 2rem; border-bottom: 2px solid var(--border-color); }
+
+        .screen-title, .completion-title { font-size: 1.8rem; font-weight: 900; text-align: center; margin-bottom: 1.5rem; }
+        .completion-icon { font-size: 4rem; animation: bounce-in 0.5s ease-out; }
+        .lesson-content, .exercise-question { font-size: 1.1rem; line-height: 1.6; text-align: center; margin-bottom: 2rem; }
+        .lesson-example { width: 100%; padding: 1rem; background: var(--bg-primary); border-left: 5px solid var(--blue); border-radius: 8px; margin-top: 1.5rem; font-style: italic; transition: background 0.3s; }
+        body.rtl .lesson-example { border-left: none; border-right: 5px solid var(--blue); }
+
+        .btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: var(--button-height); font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--text-primary); background-color: var(--bg-secondary); border: 2px solid var(--border-color); border-radius: var(--border-radius); cursor: pointer; padding: 0.5rem 1rem; text-align: center; box-shadow: 0 4px 0 var(--shadow-color); transition: all 0.2s ease; }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--shadow-color); }
+        .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 var(--shadow-color); }
+        .btn:disabled { cursor: not-allowed; color: var(--text-secondary); }
+        .btn-primary { background-color: var(--green); color: white; border-color: var(--green); box-shadow: 0 4px 0 #3a8a00; }
+        .btn-primary:hover:not(:disabled) { background-color: var(--light-green); border-color: var(--light-green); }
+        .btn.correct { background-color: var(--green); border-color: var(--green); color: white; animation: bounce 0.5s; }
+        .btn.incorrect { background-color: var(--light-red); border-color: var(--light-red); color: white; }
+        
+        footer { width: 100%; position: relative; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; }
+        
+        .giraffe-container { display: flex; align-items: flex-end; gap: 10px; margin-top: 1rem; }
+        #giraffe-svg-container { width: 80px; height: auto; flex-shrink: 0; display: flex; justify-content: center; align-items: flex-end; }
+        .speech-bubble { position: relative; background: var(--bg-secondary); border-radius: var(--border-radius); padding: 1rem; font-weight: 700; box-shadow: 0 4px 0 var(--shadow-color); border: 1px solid var(--border-color); width: 100%; }
+        .speech-bubble::before { content: ''; position: absolute; left: -10px; bottom: 15px; width: 0; height: 0; border: 10px solid transparent; border-right-color: var(--bg-secondary); border-left: 0; border-bottom: 0; margin-top: -5px; margin-left: -10px; transition: border-right-color 0.3s; }
+        body.rtl .speech-bubble::before { left: auto; right: -10px; border-right-color: transparent; border-left-color: var(--bg-secondary); border-right: 0; border-left: 10px; margin-left: 0; margin-right: -10px; transition: border-left-color 0.3s; }
+        
+        #feedback-section { width: 100%; text-align: center; padding: 1rem; }
+        .feedback-message { min-height: 80px; border-radius: var(--border-radius); padding: 1rem; margin-bottom: 1rem; font-weight: 700; font-size: 1.2rem; display: none; }
+        .feedback-message.correct { display: block; background: #e1f9d3; color: #3a8a00; border-left: 5px solid var(--green); }
+        .feedback-message.incorrect { display: block; background: #ffebee; color: #c00c00; border-left: 5px solid var(--red); }
+        body.dark-mode .feedback-message.correct { background: #2c4a27; color: #b2d8b2; }
+        body.dark-mode .feedback-message.incorrect { background: #5c2c2c; color: #f2c2c2; }
+        body.rtl .feedback-message.correct, body.rtl .feedback-message.incorrect { border-left: none; border-right: 5px solid var(--green); }
+        body.rtl .feedback-message.incorrect { border-right-color: var(--red); }
+        #next-button-container { margin-top: 1rem; width: 100%; max-width: 300px; }
+
+        .matching-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; width:100%; }
+        .matching-pair { min-height: var(--button-height); display: flex; align-items: center; justify-content: center; padding: 0.75rem; background: var(--bg-secondary); transition: background 0.3s; border: 2px solid var(--border-color); border-radius: var(--border-radius); box-shadow: 0 4px 0 var(--shadow-color); cursor: grab; user-select: none; font-weight: 700; text-align: center; }
+        .matching-pair.selected { background: var(--blue); color: white; border-color: var(--blue); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: var(--bg-secondary); padding: 2rem; border-radius: var(--border-radius); max-width: 90%; width: 400px; text-align: center; animation: bounce-in 0.4s; }
+        .modal h3 { margin-top: 0; color: var(--blue); }
+        .modal .btn { margin-top: 1rem; }
+        .modal .selection-group { margin: 1.5rem 0; }
+        .modal .selection-group p { font-weight: 700; margin-bottom: 0.5rem; }
+        .modal .btn-group { display: flex; gap: 1rem; justify-content: center;}
+        .modal .btn-group .btn { width: auto; padding: 0.5rem 1.5rem; }
+        .modal .btn-group .btn.active { background-color: var(--blue); color: white; }
+        
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        @keyframes bounce-in { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .confetti { position: fixed; top: -10px; width: 10px; height: 10px; opacity: 0.8; animation: fall 3s linear infinite; }
+        @keyframes fall { to { transform: translateY(100vh); opacity: 0; } }
+        
+        @media (max-width: 600px) { body { padding: 0.5rem; } #content-area { padding: 1rem; } .screen-title { font-size: 1.5rem; } .lesson-content, .exercise-question { font-size: 1rem; } .btn { font-size: 1rem; } .matching-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div id="welcome-modal-overlay" class="modal-overlay">
+        <div class="modal">
+            <h3 id="welcome-title"></h3>
+            <p id="welcome-text"></p>
+
+            <div class="selection-group">
+                 <p id="lang-select-label">Language</p>
+                 <div class="btn-group">
+                    <button id="lang-btn-en" class="btn active">English</button>
+                    <button id="lang-btn-he" class="btn">עברית</button>
+                 </div>
+            </div>
+
+            <button id="start-course-btn" class="btn btn-primary"></button>
+        </div>
+    </div>
+   
+    <div id="app-wrapper">
+        <header>
+            <div class="header-controls">
+                <div class="header-left">
+                     <div class="xp-display">❤️ 0</div>
+                </div>
+                <div class="header-right">
+                    <div id="lives-display" class="lives-display"></div>
+                    <button id="theme-toggle" class="theme-toggle">🌙</button>
+                    <button id="sound-toggle" class="sound-toggle">🔊</button>
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+        </header>
+
+        <main id="content-area"></main>
+
+        <footer>
+            <div class="giraffe-container">
+                <div id="giraffe-svg-container">
+                    <!-- Giraffe SVG will be injected here by JavaScript -->
+                </div>
+                <div id="giraffe-speech" class="speech-bubble"></div>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        const contentArea = document.getElementById('content-area');
+        const progressBar = document.getElementById('progress-bar');
+        const xpDisplay = document.querySelector('.xp-display');
+        const livesDisplay = document.getElementById('lives-display');
+        const soundToggle = document.getElementById('sound-toggle');
+        const themeToggle = document.getElementById('theme-toggle');
+        const giraffeSpeech = document.getElementById('giraffe-speech');
+        const giraffeSvgContainer = document.getElementById('giraffe-svg-container');
+        
+        // Modal elements
+        const welcomeModalOverlay = document.getElementById('welcome-modal-overlay');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeText = document.getElementById('welcome-text');
+        const langSelectLabel = document.getElementById('lang-select-label');
+        const langBtnEn = document.getElementById('lang-btn-en');
+        const langBtnHe = document.getElementById('lang-btn-he');
+        const startCourseBtn = document.getElementById('start-course-btn');
+
+
+        // --- Giraffe SVGs representing growth ---
+        const giraffeSVGs = [
+            // Stage 0: Baby
+            `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M58 83C58 88.5228 54.5228 93 50 93C45.4772 93 42 88.5228 42 83C42 77.4772 45.4772 73 50 73C54.5228 73 58 77.4772 58 83Z" fill="#FBBF24"/><path d="M45 52C45 50.3431 46.3431 49 48 49H52C53.6569 49 55 50.3431 55 52V73H45V52Z" fill="#FCD34D"/><path d="M51.5 39C51.5 35.6863 48.8137 33 45.5 33C42.1863 33 39.5 35.6863 39.5 39V50H51.5V39Z" fill="#FCD34D"/><circle cx="43" cy="40" r="2" fill="black"/><path d="M41 33C41 31.8954 41.8954 31 43 31H44C45.1046 31 46 31.8954 46 33V35H41V33Z" fill="#D97706"/><path d="M49 33C49 31.8954 49.8954 31 51 31H52C53.1046 31 54 31.8954 54 33V35H49V33Z" fill="#D97706"/><circle cx="47" cy="60" r="3" fill="#F59E0B"/><circle cx="53" cy="77" r="4" fill="#F59E0B"/></svg>`,
+            // Stage 1: Toddler
+            `<svg viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M60 90C60 95.5228 56.5228 100 52 100C47.4772 100 44 95.5228 44 90C44 84.4772 47.4772 80 52 80C56.5228 80 60 84.4772 60 90Z" fill="#FBBF24"/><path d="M47 50C47 48.3431 48.3431 47 50 47H54C55.6569 47 57 48.3431 57 50V80H47V50Z" fill="#FCD34D"/><path d="M53.5 32C53.5 28.6863 50.8137 26 47.5 26C44.1863 26 41.5 28.6863 41.5 32V48H53.5V32Z" fill="#FCD34D"/><circle cx="45" cy="33" r="2" fill="black"/><path d="M43 26C43 24.8954 43.8954 24 45 24H46C47.1046 24 48 24.8954 48 26V28H43V26Z" fill="#D97706"/><path d="M51 26C51 24.8954 51.8954 24 53 24H54C55.1046 24 56 24.8954 56 26V28H51V26Z" fill="#D97706"/><circle cx="49" cy="65" r="3.5" fill="#F59E0B"/><circle cx="55" cy="84" r="4.5" fill="#F59E0B"/><circle cx="49" cy="93" r="3" fill="#F59E0B"/></svg>`,
+            // Stage 2: Youth
+            `<svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M62 97C62 102.523 58.5228 107 54 107C49.4772 107 46 102.523 46 97C46 91.4772 49.4772 87 54 87C58.5228 87 62 91.4772 62 97Z" fill="#FBBF24"/><path d="M49 48C49 46.3431 50.3431 45 52 45H56C57.6569 45 59 46.3431 59 48V87H49V48Z" fill="#FCD34D"/><path d="M55.5 25C55.5 21.6863 52.8137 19 49.5 19C46.1863 19 43.5 21.6863 43.5 25V46H55.5V25Z" fill="#FCD34D"/><circle cx="47" cy="26" r="2" fill="black"/><path d="M45 19C45 17.8954 45.8954 17 47 17H48C49.1046 17 50 17.8954 50 19V21H45V19Z" fill="#D97706"/><path d="M53 19C53 17.8954 53.8954 17 55 17H56C57.1046 17 58 17.8954 58 19V21H53V19Z" fill="#D97706"/><circle cx="51" cy="70" r="4" fill="#F59E0B"/><circle cx="57" cy="91" r="5" fill="#F59E0B"/><circle cx="51" cy="55" r="3" fill="#F59E0B"/></svg>`,
+             // Stage 3 & 4: Teen / Adult
+            `<svg viewBox="0 0 100 130" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M64 104C64 109.523 60.5228 114 56 114C51.4772 114 48 109.523 48 104C48 98.4772 51.4772 94 56 94C60.5228 94 64 98.4772 64 104Z" fill="#FBBF24"/><path d="M51 46C51 44.3431 52.3431 43 54 43H58C59.6569 43 61 44.3431 61 46V94H51V46Z" fill="#FCD34D"/><path d="M57.5 18C57.5 14.6863 54.8137 12 51.5 12C48.1863 12 45.5 14.6863 45.5 18V44H57.5V18Z" fill="#FCD34D"/><circle cx="49" cy="19" r="2" fill="black"/><path d="M47 12C47 10.8954 47.8954 10 49 10H50C51.1046 10 52 10.8954 52 12V14H47V12Z" fill="#D97706"/><path d="M55 12C55 10.8954 55.8954 10 57 10H58C59.1046 10 60 10.8954 60 12V14H55V12Z" fill="#D97706"/><circle cx="53" cy="75" r="4" fill="#F59E0B"/><circle cx="59"cy="98" r="5" fill="#F59E0B"/><circle cx="53" cy="58" r="3.5" fill="#F59E0B"/><circle cx="58" cy="108" r="3" fill="#F59E0B"/></svg>`
+        ];
+
+        let audioCtx;
+        function initAudio() { if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { console.error("Web Audio API not supported."); } } }
+        function playSound(type) {
+            if (!audioCtx || state.isMuted) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.connect(g); g.connect(audioCtx.destination);
+            if (type === 'correct') { o.type = 'sine'; o.frequency.setValueAtTime(600, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1); g.gain.setValueAtTime(0.2, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2); o.start(); o.stop(audioCtx.currentTime + 0.2); }
+            else if (type === 'incorrect') { o.type = 'square'; o.frequency.setValueAtTime(200, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2); g.gain.setValueAtTime(0.2, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3); o.start(); o.stop(audioCtx.currentTime + 0.3); }
+            else if (type === 'streak' || type === 'moduleComplete') { const notes = type === 'streak' ? [600, 750, 900] : [523, 659, 783, 1046]; g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5); notes.forEach((n, i) => { const o2 = audioCtx.createOscillator(); o2.connect(g); o2.type = 'triangle'; o2.frequency.setValueAtTime(n, audioCtx.currentTime + i * 0.1); o2.start(audioCtx.currentTime + i * 0.1); o2.stop(audioCtx.currentTime + i * 0.1 + 0.1); }); }
+        }
+
+        let state = {};
+        const defaultState = {
+            view: 'map',
+            lang: 'en',
+            theme: 'light',
+            activeModule: { id: null, screen: 0, lives: 3 },
+            xp: 0,
+            streak: 0,
+            isMuted: false,
+            completedModules: []
+        };
+        
+        // --- NVC COURSE DATA with Hebrew translation ---
+        const courseContent = {
+            en: {
+                welcomeTitle: "Welcome to Compassionate Communication!",
+                welcomeText: "Join me on a journey to learn Nonviolent Communication (NVC). We'll learn to connect more deeply with ourselves and others.",
+                langSelectLabel: "Language",
+                letsGo: "Let's Begin 🌱",
+                gotIt: "Got it!",
+                mapSpeech: "Wonderful! When you're ready, select the next step on our path.",
+                stageSpeech: "Let's look at this together.",
+                moduleComplete: "Step Complete!",
+                outOfTries: "It's okay to stumble.",
+                outOfTriesMsg: "That was tricky! Every attempt is a chance to learn. Let's try this step again from the beginning.",
+                tryAgain: "Try Again",
+                continue: "Continue",
+                continueToMap: "Continue to Map",
+                level1Title: "The Path of NVC",
+                finalTitle: "You've learned the core path! 🎉",
+                finalContent: "Congratulations! You've walked through the four steps of NVC. You now have the tools to express yourself honestly and listen with compassion. This is a lifelong practice.",
+                finalBot: "Your heart is speaking so clearly! 💖",
+            },
+            he: {
+                welcomeTitle: "ברוכים הבאים לתקשורת מקרבת!",
+                welcomeText: "הצטרפו אליי למסע ללימוד תקשורת מקרבת (NVC). נלמד להתחבר לעצמנו ולאחרים באופן עמוק יותר.",
+                langSelectLabel: "שפה",
+                letsGo: "בואו נתחיל 🌱",
+                gotIt: "הבנתי!",
+                mapSpeech: "נהדר! כשתהיו מוכנים, בחרו את הצעד הבא בדרכנו.",
+                stageSpeech: "בואו נבחן את זה יחד.",
+                moduleComplete: "השלב הושלם!",
+                outOfTries: "זה בסדר למעוד.",
+                outOfTriesMsg: "זה היה מאתגר! כל ניסיון הוא הזדמנות ללמוד. בואו ננסה את השלב הזה שוב מההתחלה.",
+                tryAgain: "לנסות שוב",
+                continue: "המשך",
+                continueToMap: "המשך למפה",
+                level1Title: "השביל של תקשורת מקרבת",
+                finalTitle: "למדתם את שביל הליבה! 🎉",
+                finalContent: "כל הכבוד! עברתם דרך ארבעת הצעדים של תקשורת מקרבת. כעת יש לכם כלים להביע את עצמכם בכנות ולהקשיב בחמלה. זוהי דרך חיים.",
+                finalBot: "הלב שלכם מדבר כל כך ברור! 💖",
+            }
+        };
+
+        const modules = [
+            { id: 1, title: {en: "Observations", he: "הבחנות"}, icon: "👀", screens: [
+                { type: 'lesson', title: {en: "Meet the Giraffe", he: "הכירו את הג'ירף"}, content: { en: "In NVC, the giraffe symbolizes compassionate communication. It has a long neck to see from a clear perspective and a big heart. I'll be your guide!", he: "בתקשורת מקרבת, הג'ירף מסמל תקשורת חומלת. יש לו צוואר ארוך כדי לראות מפרספקטיבה רחבה ולב גדול. אני אהיה המדריך שלכם!" } },
+                { type: 'lesson', title: {en: 'Observation vs. Evaluation', he: 'הבחנה מול הערכה'}, content: {en: "The first step is to observe what is actually happening, free of judgment. We state facts, like a camera.", he: "הצעד הראשון הוא להבחין במה שקורה בפועל, ללא שיפוט. אנחנו מציינים עובדות, כאילו היינו מצלמה."}, example: {en: "Evaluation: 'You're so messy.'\nObservation: 'I see socks on the floor.'", he: "הערכה: 'אתה כל כך מבולגן.'\nהבחנה: 'אני רואה גרביים על הרצפה.'"} },
+                { type: 'exercise', subType: 'ab-test', question: {en:"Which is an observation?", he: "איזו אמירה היא הבחנה?"}, options: [{text: {en:'You never listen.', he: 'אתה אף פעם לא מקשיב.'}, correct: false}, {text: {en:'You were looking at your phone while I was talking.', he: 'הסתכלת בטלפון שלך כשדיברתי.'}, correct: true}], feedback: {correct: {en:"Exactly! That describes a specific action without judgment.", he: "בדיוק! זה מתאר פעולה ספציפית ללא שיפוט."}, incorrect: {en:"'Never' is an evaluation. The other option states what was seen.", he: "'אף פעם' היא הערכה. האפשרות השנייה מציינת מה שנראה."}} },
+                { type: 'lesson', title: {en: 'Avoiding Generalizations', he: 'הימנעות מהכללות'}, content: {en: "Words like 'always,' 'never,' 'often,' or 'seldom' usually signal an evaluation disguised as an observation.", he: "מילים כמו 'תמיד', 'אף פעם', 'לעיתים קרובות' או 'לפעמים' בדרך כלל מסמנות הערכה המחופשת להבחנה."}, example: {en:"Evaluation: 'You are always late.'\nObservation: 'The last three times we met, you arrived after our agreed time.'", he:"הערכה: 'אתה תמיד מאחר.'\nהבחנה: 'בשלוש הפעמים האחרונות שנפגשנו, הגעת אחרי השעה שקבענו.'"} },
+                { type: 'exercise', subType: 'mcq', question: {en:"Which word signals an evaluation?", he: "איזו מילה מסמנת הערכה?"}, options: [{text: {en:'always', he: 'תמיד'}, correct: true}, {text: {en:'saw', he: 'ראיתי'}, correct: false}, {text: {en:'heard', he: 'שמעתי'}, correct: false}], feedback: {correct: {en:"Correct! Generalizations like 'always' are evaluations.", he: "נכון! הכללות כמו 'תמיד' הן הערכות."}, incorrect: {en:"'Saw' and 'heard' point to direct observations.", he: "'ראיתי' ו'שמעתי' מצביעות על הבחנות ישירות."}} },
+                { type: 'lesson', title: {en: 'Quotes as Observations', he: 'ציטוטים כהבחנות'}, content: {en: "Quoting someone directly is a very powerful form of observation. It removes interpretation.", he: "לצטט מישהו ישירות זו צורה חזקה מאוד של הבחנה. זה מסיר פרשנות."}, example: {en:"Interpretation: 'He was angry.'\nObservation: 'He said, \"I am so frustrated right now!\" in a loud voice.'", he:"פרשנות: 'הוא כעס.'\nהבחנה: 'הוא אמר, \"אני כל כך מתוסכל עכשיו!\" בקול רם.'"} },
+                { type: 'exercise', subType: 'ab-test', question: {en:"Which is a better observation?", he: "איזו הבחנה טובה יותר?"}, options: [{text: {en:'You were rude.', he: 'היית גס רוח.'}, correct: false}, {text: {en:"You said 'That's a stupid idea.'", he: 'אמרת "זה רעיון טיפשי".'}, correct: true}], feedback: {correct: {en:"Exactly. Quoting is precise.", he: "בדיוק. ציטוט הוא מדויק."}, incorrect: {en:"'Rude' is a judgment. Quoting the exact words is an observation.", he: "'גס רוח' זה שיפוט. ציטוט המילים המדויקות הוא הבחנה."}} },
+            ]},
+             { id: 2, title: {en: "Feelings", he: "רגשות"}, icon: "❤️", screens: [
+                { type: 'lesson', title: {en: 'Identifying Feelings', he: 'זיהוי רגשות'}, content: {en: "The second step is to notice the feelings that arise from our observation. These are emotions within us, not thoughts about others.", he: "הצעד השני הוא לשים לב לרגשות שעולים מההבחנה שלנו. אלו הן רגשות בתוכנו, לא מחשבות על אחרים."}, example: {en: "Thought disguised as feeling: 'I feel like you don't care.'\nPure feeling: 'I feel sad.'", he: "מחשבה מחופשת לרגש: 'אני מרגיש שלא אכפת לך.'\nרגש טהור: 'אני מרגיש עצוב.'"} },
+                { type: 'exercise', subType: 'mcq', question: {en: "Which of these is a pure feeling?", he: "איזה מהבאים הוא רגש טהור?"}, options: [{text: {en: 'I feel misunderstood.', he: 'אני מרגיש לא מובן.'}, correct: false}, {text: {en: 'I feel hurt.', he: 'אני מרגיש פגוע.'}, correct: true}, {text: {en: 'I feel that you should know better.', he: 'אני מרגיש שהיית צריך לדעת יותר טוב.'}, correct: false}], feedback: {correct: {en: "Yes, 'hurt' is a feeling word. 'Misunderstood' describes a thought about what someone else is thinking.", he: "כן, 'פגוע' היא מילת רגש. 'לא מובן' מתאר מחשבה על מה שאחרים חושבים."}, incorrect: {en: "'Hurt' is a pure feeling. 'Misunderstood' is a thought about how someone else sees you.", he: "'פגוע' הוא רגש טהור. 'לא מובן' היא מחשבה על איך מישהו אחר רואה אותך."}} },
+                { type: 'lesson', title: {en: 'Feelings vs. Faux Feelings', he: "רגשות מול 'רגשות דמה'"}, content: {en: "Words like 'attacked,' 'abandoned,' or 'betrayed' often imply that someone else did something *to* us. They are thoughts about others' actions, not pure feelings.", he: "מילים כמו 'מותקף', 'נטוש' או 'נבגד' לרוב מרמזות שמישהו אחר עשה לנו משהו. הן מחשבות על פעולות של אחרים, לא רגשות טהורים."}, example: {en: "Faux feeling: 'I feel rejected.'\nPure feeling behind it: 'I feel lonely,' or 'I feel scared.'", he: "רגש דמה: 'אני מרגיש דחוי.'\nהרגש הטהור מאחוריו: 'אני מרגיש בודד,' או 'אני מרגיש פוחד.'"} },
+                { type: 'exercise', subType: 'ab-test', question: {en: "Which statement expresses a pure feeling?", he: "איזו אמירה מבטאת רגש טהור?"}, options: [{text: {en: 'I feel manipulated.', he: 'אני מרגיש מנוצל.'}, correct: false}, {text: {en: 'I feel disappointed.', he: 'אני מרגיש מאוכזב.'}, correct: true}], feedback: {correct: {en: "Correct. 'Disappointed' describes your internal experience. 'Manipulated' describes your interpretation of another's actions.", he: "נכון. 'מאוכזב' מתאר את החוויה הפנימית שלך. 'מנוצל' מתאר את הפרשנות שלך לפעולות של אחר."}, incorrect: {en: "'Manipulated' is an interpretation of someone's actions. 'Disappointed' is a pure feeling.", he: "'מנוצל' הוא פרשנות לפעולות של מישהו אחר. 'מאוכזב' הוא רגש טהור."}} },
+                { type: 'lesson', title: {en: 'Expanding Your Feelings Vocabulary', he: 'הרחבת אוצר המילים של הרגשות'}, content: {en: "The more words we have for our feelings, the better we can understand ourselves. Are you 'angry,' or are you 'frustrated,' 'irritated,' or 'impatient'?", he: "ככל שיש לנו יותר מילים לרגשות שלנו, כך נוכל להבין את עצמנו טוב יותר. האם אתה 'כועס', או שאולי אתה 'מתוסכל', 'עצבני' או 'חסר סבלנות'?"} },
+                { type: 'exercise', subType: 'matching', question: {en: "Match the situation to a possible feeling.", he: "התאם את הסיטואציה לרגש אפשרי."}, pairs: [{item1: {en: 'Seeing a friend after a long time', he: 'לראות חבר אחרי הרבה זמן'}, item2: {en: 'Joyful', he: 'שמח'}}, {item1: {en: 'Missing a flight', he: 'לפספס טיסה'}, item2: {en: 'Frustrated', he: 'מתוסכל'}}, {item1: {en: 'Receiving a surprise gift', he: 'לקבל מתנת הפתעה'}, item2: {en: 'Surprised', he: 'מופתע'}}], feedback: {correct: {en: "Great matches! Connecting situations to feelings is a key step.", he: "התאמות נהדרות! חיבור בין מצבים לרגשות הוא צעד מפתח."}, incorrect: {en: "Let's try that again. Think about what emotion might come up in each situation.", he: "בוא ננסה שוב. חשבו איזו תחושה יכולה לעלות בכל מצב."}} },
+            ]},
+            { id: 3, title: {en: "Needs", he: "צרכים"}, icon: "🌱", screens: [
+                { type: 'lesson', title: {en: 'Connecting to Needs', he: 'חיבור לצרכים'}, content: {en: "The third step connects our feelings to universal human needs. Our feelings are messengers telling us what we need.", he: "הצעד השלישי מחבר את הרגשות שלנו לצרכים אנושיים אוניברסליים. הרגשות שלנו הם שליחים שאומרים לנו מה אנחנו צריכים."}, example: {en: "'I feel sad *because I have a need for connection*.'", he: "'אני מרגיש עצוב *כי יש לי צורך בחיבור*.'"} },
+                { type: 'lesson', title: {en: 'What Are Needs?', he: 'מהם צרכים?'}, content: {en: "Needs are universal values like safety, connection, respect, and autonomy. They are common to all people and are never in conflict.", he: "צרכים הם ערכים אוניברסליים כמו ביטחון, חיבור, כבוד ואוטונומיה. הם משותפים לכל בני האדם ולעולם אינם בקונפליקט."}, example: {en: "We all need nourishment, but I might want a salad while you want a pizza.", he: "כולנו צריכים תזונה, אבל אני אולי ארצה סלט ואתם תרצו פיצה."} },
+                { type: 'exercise', subType: 'ab-test', question: {en: "Which statement connects a feeling to a need?", he: "איזו אמירה מחברת רגש לצורך?"}, options: [{text: {en: "I'm angry because you ignored me.", he: "אני כועס כי התעלמת ממני."}, correct: false}, {text: {en: "When you looked away, I felt hurt because I need connection.", he: "כשהסטת את מבטך, הרגשתי פגוע כי אני זקוק לחיבור."}, correct: true}], feedback: {correct: {en: "Beautiful! You connected the feeling ('hurt') to a universal need ('connection'), rather than blaming the other person.", he: "נפלא! חיברת את הרגש ('פגוע') לצורך אוניברסלי ('חיבור'), במקום להאשים את האדם השני."}, incorrect: {en: "The best answer connects the feeling to a universal need, not just the other person's action.", he: "התשובה הטובה ביותר מחברת את הרגש לצורך אוניברסלי, לא רק לפעולה של האדם השני."}} },
+                { type: 'lesson', title: {en: 'Needs vs. Strategies', he: 'צרכים מול אסטרטגיות'}, content: {en: "A need is the core value. A strategy is a specific action to meet that need. We often confuse the two.", he: "צורך הוא ערך הליבה. אסטרטגיה היא פעולה ספציפית כדי למלא את הצורך. לעתים קרובות אנו מבלבלים בין השניים."}, example: {en: "Strategy: 'I need you to take out the trash.'\nNeed behind it: 'I need support and cooperation.'", he: "אסטרטגיה: 'אני צריך שתוציא את הזבל.'\nהצורך מאחורי זה: 'אני זקוק לתמיכה ושיתוף פעולה.'"} },
+                { type: 'exercise', subType: 'mcq', question: {en: "Which of these is a universal need (not a strategy)?", he: "איזה מהבאים הוא צורך אוניברסלי (לא אסטרטגיה)?"}, options: [{text: {en: 'For you to call me', he: 'שתתקשר אליי'}, correct: false}, {text: {en: 'Honesty', he: 'כנות'}, correct: true}, {text: {en: 'A vacation', he: 'חופשה'}, correct: false}], feedback: {correct: {en: "That's right! 'Honesty' is a universal value. The others are specific strategies to meet a need.", he: "נכון! 'כנות' הוא ערך אוניברסלי. האחרים הם אסטרטגיות ספציפיות למילוי צרכים."}, incorrect: {en: "'Honesty' is a universal need. A phone call or a vacation are strategies to meet needs (like connection or rest).", he: "'כנות' הוא צורך אוניברסלי. שיחת טלפון או חופשה הם אסטרטגיות למילוי צרכים (כמו חיבור או מנוחה)."}} },
+                { type: 'exercise', subType: 'ab-test', question: {en: "Which expresses a need, not a strategy?", he: "איזו אמירה מבטאת צורך, לא אסטרטגיה?"}, options: [{text: {en: "I need you to listen to me.", he: "אני צריך שתקשיב לי."}, correct: false}, {text: {en: "I need to be heard.", he: "אני צריך שישמעו אותי."}, correct: true}], feedback: {correct: {en: "Precisely. 'To be heard' is the core need. 'For you to listen' is one strategy to meet that need.", he: "בדיוק. 'להיות נשמע' הוא צורך הליבה. 'שתקשיב לי' היא אסטרטגיה אחת למלא את הצורך הזה."}, incorrect: {en: "'To be heard' is the underlying need. Asking someone to listen is a specific strategy.", he: "'להיות נשמע' הוא הצורך הבסיסי. לבקש ממישהו להקשיב זו אסטרטגיה ספציפית."}} },
+            ]},
+            { id: 4, title: {en: "Requests", he: "בקשות"}, icon: "🗣️", screens: [
+                { type: 'lesson', title: {en: "Making Requests", he: "ניסוח בקשות"}, content: {en: "The final step is to make a clear, positive, and doable request for an action to help meet our need. This is a request, not a demand.", he: "השלב האחרון הוא לנסח בקשה ברורה, חיובית וברת-ביצוע לפעולה שתעזור למלא את הצורך שלנו. זו בקשה, לא דרישה."}, example: {en: "Demand: 'Stop being so loud!'\nRequest: 'Would you be willing to lower your voice?'", he: "דרישה: 'תפסיק להיות כל כך רועש!'\nבקשה: 'האם תהיה מוכן להנמיך את קולך?'"} },
+                { type: 'exercise', subType: 'mcq', question: {en: "Which is a clear and doable request?", he: "איזו בקשה היא ברורה וברת-ביצוע?"}, options: [{text: {en: 'Be more respectful.', he: 'תהיה יותר מכבד.'}, correct: false}, {text: {en: 'Show me you care.', he: 'תראה לי שאכפת לך.'}, correct: false}, {text: {en: 'Would you be willing to tell me what you heard me say?', he: 'האם תהיה מוכן לומר לי מה שמעת אותי אומר?'}, correct: true}], feedback: {correct: {en: "Perfect! That is a specific, concrete action someone can take in the present moment.", he: "מושלם! זו פעולה ספציפית ומוחשית שמישהו יכול לבצע ברגע זה."}, incorrect: {en: "The best requests are for specific actions. 'Be more respectful' is too vague. What action equals respect?", he: "הבקשות הטובות ביותר הן לפעולות ספציפיות. 'תהיה יותר מכבד' מעורפל מדי. איזו פעולה שווה לכבוד?"}} },
+                { type: 'lesson', title: {en: 'Request vs. Demand', he: 'בקשה מול דרישה'}, content: {en: "A key difference is our willingness to hear 'no'. If we are not open to hearing 'no', our request is actually a demand.", he: "הבדל מרכזי הוא הנכונות שלנו לשמוע 'לא'. אם איננו פתוחים לשמוע 'לא', הבקשה שלנו היא למעשה דרישה."} },
+                { type: 'exercise', subType: 'ab-test', question: {en: "Which is more likely to be heard as a request, not a demand?", he: "איזו אמירה צפויה להישמע כבקשה, לא כדרישה?"}, options: [{text: {en: 'You need to take out the trash now.', he: 'אתה צריך להוציא את הזבל עכשיו.'}, correct: false}, {text: {en: 'Would you be willing to take out the trash?', he: 'האם תהיה מוכן להוציא את הזבל?'}, correct: true}], feedback: {correct: {en: "Exactly. Phrasing it as a 'Would you be willing...?' question opens the door for connection, even if the answer is no.", he: "בדיוק. ניסוח כשאלה 'האם תהיה מוכן...?' פותח דלת לחיבור, גם אם התשובה היא לא."}, incorrect: {en: "Using phrases like 'Would you be willing...?' invites cooperation, whereas 'You need to...' can sound like a demand.", he: "שימוש בביטויים כמו 'האם תהיה מוכן...?' מזמין שיתוף פעולה, בעוד ש'אתה צריך...' יכול להישמע כדרישה."}} },
+                { type: 'lesson', title: {en: 'The Full Path (OFNR)', he: 'השביל המלא (הבחנה, רגש, צורך, בקשה)'}, content: {en: "Let's put it all together! Observation, Feeling, Need, Request.", he: "בואו נחבר הכל יחד! הבחנה, רגש, צורך, בקשה."}, example: {en: "'When I see the wet towel on the bed (O), I feel irritated (F), because I have a need for order in our shared space (N). Would you be willing to hang it in the bathroom (R)?'", he: "כשאני רואה את המגבת הרטובה על המיטה (ה), אני מרגיש עצבני (ר), כי יש לי צורך בסדר במרחב המשותף שלנו (צ). האם תהיה מוכן לתלות אותה בחדר האמבטיה (ב)?'"} },
+                { type: 'exercise', subType: 'mcq', question: {en: "What is the 'F' in the OFNR sequence?", he: "מהי ה'ר' ברצף הבחנה, רגש, צורך, בקשה?"}, options: [{text: {en: 'Fact', he: 'עובדה (Fact)'}, correct: false}, {text: {en: 'Feeling', he: 'רגש (Feeling)'}, correct: true}, {text: {en: 'Fix', he: 'תיקון (Fix)'}, correct: false}], feedback: {correct: {en: "You got it! O-F-N-R stands for Observation, Feeling, Need, Request.", he: "תפסת את זה! הרצף הוא הבחנה, רגש, צורך, בקשה."}, incorrect: {en: "The F is for Feeling. Remember: Observation, Feeling, Need, Request.", he: "ה-ר' היא עבור רגש. זכרו: הבחנה, רגש, צורך, בקשה."}} },
+            ]},
+        ];
+
+        function saveData() { localStorage.setItem('nvcCourseProgress', JSON.stringify(state)); }
+        function loadData() {
+            const savedData = localStorage.getItem('nvcCourseProgress');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                state = { ...defaultState, ...parsed };
+            } else {
+                state = { ...defaultState };
+            }
+        }
+        function createButton(text, onClick, extraClass = '') { const btn = document.createElement('button'); btn.innerHTML = text; btn.className = `btn ${extraClass}`; btn.onclick = onClick; return btn; }
+        
+        function getTranslation(obj) {
+            if (typeof obj !== 'object' || obj === null) {
+                return obj;
+            }
+            return obj[state.lang] || obj['en'];
+        }
+
+        function updateUI() { 
+            const t = getTranslation(courseContent);
+            const totalModules = modules.length;
+            let progressPercentage = totalModules > 0 ? (state.completedModules.length / totalModules) * 100 : 0;
+            
+            livesDisplay.style.display = 'none';
+            
+            if (state.view === 'stage') {
+                const module = modules.find(s => s.id === state.activeModule.id);
+                progressPercentage = module.screens.length > 0 ? (state.activeModule.screen / module.screens.length) * 100 : 0;
+                livesDisplay.innerHTML = `❤️`.repeat(state.activeModule.lives);
+                livesDisplay.style.display = 'block';
+            }
+            
+            progressBar.style.width = `${progressPercentage}%`;
+            xpDisplay.innerHTML = `💖 ${state.xp}`; 
+            soundToggle.textContent = state.isMuted ? '🔇' : '🔊';
+            themeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+            document.body.dir = state.lang === 'he' ? 'rtl' : 'ltr';
+            
+            const giraffeIndex = Math.min(state.completedModules.length, giraffeSVGs.length - 1);
+            giraffeSvgContainer.innerHTML = giraffeSVGs[giraffeIndex];
+        }
+
+        function render() {
+            updateUI();
+            contentArea.innerHTML = '';
+            const view = state.view;
+            if (view === 'map') renderMapView();
+            else if (view === 'stage') renderModuleView();
+            else if (view === 'moduleComplete') renderModuleCompleteScreen();
+            else if (view === 'moduleFailed') renderModuleFailedScreen();
+            else if (view === 'final') renderFinalScreen();
+        }
+
+        function renderMapView() {
+            const t = getTranslation(courseContent);
+            const mapView = document.createElement('div');
+            mapView.className = 'map-view';
+            mapView.innerHTML = `<h2 class="level-title">${t.level1Title}</h2>`;
+            modules.forEach(moduleData => {
+                const node = document.createElement('div');
+                node.className = 'stage-node';
+                const isCompleted = state.completedModules.includes(moduleData.id);
+                const isUnlocked = state.completedModules.length + 1 === moduleData.id;
+                const isLocked = !isCompleted && !isUnlocked;
+                const button = document.createElement('button');
+                button.className = 'stage-button';
+                if(isCompleted) button.classList.add('completed');
+                if(isUnlocked) button.classList.add('unlocked');
+                if(isLocked) button.classList.add('locked');
+                button.disabled = isLocked;
+                button.innerHTML = `<div class="stage-icon">${isCompleted ? '⭐' : moduleData.icon}</div><div class="stage-title-map">${getTranslation(moduleData.title)}</div>`;
+                button.onclick = () => { 
+                    state.view = 'stage'; 
+                    state.activeModule = { id: moduleData.id, screen: 0, lives: 3 }; 
+                    render(); 
+                };
+                if (isUnlocked) {
+                    const botIcon = document.createElement('div');
+                    botIcon.className = 'giraffe-map-icon';
+                    const giraffeIndex = Math.min(state.completedModules.length, giraffeSVGs.length - 1);
+                    botIcon.innerHTML = giraffeSVGs[giraffeIndex];
+                    node.appendChild(botIcon);
+                }
+                node.appendChild(button);
+                mapView.appendChild(node);
+            });
+            contentArea.appendChild(mapView);
+            giraffeSpeech.textContent = t.mapSpeech;
+        }
+
+        function renderModuleView() {
+            const t = getTranslation(courseContent);
+            const module = modules.find(s => s.id === state.activeModule.id);
+            if (!module) return;
+            const screenData = module.screens[state.activeModule.screen];
+            
+            giraffeSpeech.textContent = t.stageSpeech;
+
+            if (screenData.type === 'lesson') {
+                const title = document.createElement('h1');
+                title.className = 'screen-title';
+                title.textContent = getTranslation(screenData.title);
+                contentArea.appendChild(title);
+
+                const content = document.createElement('p'); 
+                content.className = 'lesson-content'; 
+                content.innerHTML = getTranslation(screenData.content); 
+                contentArea.appendChild(content);
+                
+                if (screenData.example) { 
+                    const example = document.createElement('div'); 
+                    example.className = 'lesson-example'; 
+                    example.innerHTML = getTranslation(screenData.example).replace(/\n/g, '<br>'); 
+                    contentArea.appendChild(example); 
+                }
+                
+                const nextButton = createButton(t.continue, () => advanceScreen(), 'btn-primary');
+                contentArea.appendChild(nextButton);
+            } else if (screenData.type === 'exercise') {
+                renderExerciseScreen(screenData);
+            }
+        }
+        
+        function advanceScreen() {
+            const module = modules.find(s => s.id === state.activeModule.id);
+            if (state.activeModule.screen < module.screens.length - 1) {
+                state.activeModule.screen++; render();
+            } else {
+                state.view = 'moduleComplete';
+                render();
+            }
+        }
+        
+        function completeModule() {
+            if (!state.completedModules.includes(state.activeModule.id)) {
+                state.completedModules.push(state.activeModule.id);
+                state.xp += 25;
+            }
+            if (state.completedModules.length === modules.length) {
+                state.view = 'final';
+            } else {
+                state.view = 'map';
+            }
+            saveData();
+            render();
+        }
+
+        function handleAnswer(button, isCorrect, feedbackData) {
+            const t = getTranslation(courseContent);
+            contentArea.querySelectorAll('button').forEach(b => b.disabled = true);
+            const feedbackSection = document.createElement('div');
+            const nextButtonContainer = document.createElement('div');
+            feedbackSection.id = 'feedback-section';
+            feedbackSection.innerHTML = `<div class="feedback-message"></div>`;
+            nextButtonContainer.id = 'next-button-container';
+            feedbackSection.appendChild(nextButtonContainer);
+            const feedbackMessage = feedbackSection.querySelector('.feedback-message');
+            
+            const feedback = {
+                correct: getTranslation(feedbackData.correct),
+                incorrect: getTranslation(feedbackData.incorrect)
+            };
+
+            if (isCorrect) {
+                playSound('correct');
+                state.xp += 10;
+                state.streak++;
+                button.classList.add('correct');
+                feedbackMessage.textContent = feedback.correct;
+                feedbackMessage.className = 'feedback-message correct';
+                if (state.streak >= 3) { giraffeSpeech.textContent = getTranslation({en: "You're connecting so well! ✨", he: "אתם מתחברים כל כך טוב! ✨"}); playSound('streak'); }
+                else { giraffeSpeech.textContent = t.gotIt; }
+                const nextButton = createButton(t.continue, () => advanceScreen(), 'btn-primary');
+                nextButtonContainer.appendChild(nextButton);
+            } else {
+                playSound('incorrect');
+                state.streak = 0;
+                state.activeModule.lives--;
+                button.classList.add('incorrect');
+                feedbackMessage.textContent = feedback.incorrect;
+                feedbackMessage.className = 'feedback-message incorrect';
+                giraffeSpeech.textContent = getTranslation({en: "That's a common mix-up. Let's look again.", he: "זה בלבול נפוץ. בואו ננסה שוב."});
+
+                if (state.activeModule.lives <= 0) {
+                    state.view = 'moduleFailed';
+                    setTimeout(render, 1500);
+                } else {
+                    const retryButton = createButton(t.tryAgain, () => render());
+                    nextButtonContainer.appendChild(retryButton);
+                }
+            }
+            contentArea.appendChild(feedbackSection);
+            saveData();
+            updateUI();
+        }
+        
+        function renderFinalScreen() {
+            const t = getTranslation(courseContent);
+            contentArea.innerHTML = '';
+            const title = document.createElement('h1');
+            title.className = 'completion-title';
+            title.textContent = t.finalTitle;
+            contentArea.appendChild(title);
+            const content = document.createElement('p');
+            content.className = 'lesson-content';
+            content.textContent = t.finalContent;
+            contentArea.appendChild(content);
+            
+            for(let i=0; i<100; i++) { const c = document.createElement('div'); c.className='confetti'; c.style.left=Math.random()*100+'vw'; c.style.animationDuration=Math.random()*2+3+'s'; c.style.backgroundColor=`hsl(${Math.random()*360},100%,50%)`; document.body.appendChild(c); setTimeout(() => { c.remove() }, 5000); }
+            giraffeSpeech.textContent = t.finalBot;
+        }
+
+        function renderModuleCompleteScreen() {
+            playSound('moduleComplete');
+            const t = getTranslation(courseContent);
+            contentArea.innerHTML = '';
+            const icon = document.createElement('div');
+            icon.className = 'completion-icon';
+            icon.textContent = '🎉';
+            contentArea.appendChild(icon);
+            const title = document.createElement('h2');
+            title.className = 'completion-title';
+            title.textContent = t.moduleComplete;
+            contentArea.appendChild(title);
+            const continueButton = createButton(t.continueToMap, () => completeModule(), 'btn-primary');
+            contentArea.appendChild(continueButton);
+        }
+
+        function renderModuleFailedScreen() {
+            const t = getTranslation(courseContent);
+            contentArea.innerHTML = '';
+            const icon = document.createElement('div');
+            icon.className = 'completion-icon';
+            icon.textContent = '🌱';
+            contentArea.appendChild(icon);
+            const title = document.createElement('h2');
+            title.className = 'completion-title';
+            title.textContent = t.outOfTries;
+            contentArea.appendChild(title);
+            const content = document.createElement('p');
+            content.className = 'lesson-content';
+            content.textContent = t.outOfTriesMsg;
+            contentArea.appendChild(content);
+            const retryButton = createButton(t.tryAgain, () => {
+                state.view = 'map'; render();
+            }, 'btn-primary');
+            contentArea.appendChild(retryButton);
+        }
+
+        function renderExerciseScreen(screenData) {
+            const questionText = getTranslation(screenData.question);
+            const question = document.createElement('p'); question.className = 'exercise-question'; question.textContent = questionText; contentArea.appendChild(question);
+            const choiceContainer = document.createElement('div');
+            switch(screenData.subType) {
+                case 'mcq': case 'ab-test':
+                    choiceContainer.className = 'choice-grid';
+                    screenData.options.forEach(option => { 
+                        const btn = createButton(getTranslation(option.text), () => handleAnswer(btn, option.correct, screenData.feedback));
+                        choiceContainer.appendChild(btn);
+                     });
+                    break;
+                case 'matching':
+                     choiceContainer.className = 'matching-grid';
+                     renderMatchingExercise(screenData, choiceContainer);
+                     break;
+            }
+            contentArea.appendChild(choiceContainer);
+        }
+
+        function renderMatchingExercise(data, container) {
+            const translatedPairs = data.pairs.map(p => ({
+                item1: getTranslation(p.item1),
+                item2: getTranslation(p.item2)
+            }));
+            const allItems = translatedPairs.flatMap(p => [p.item1, p.item2]);
+            const shuffledItems = [...allItems].sort(() => Math.random() - 0.5);
+
+            let selectedButton = null;
+            let correctPairs = 0;
+
+            const checkMatch = (clickedButton) => {
+                if (!selectedButton) {
+                    selectedButton = clickedButton;
+                    selectedButton.classList.add('selected');
+                    return;
+                }
+                if (selectedButton === clickedButton) { selectedButton.classList.remove('selected'); selectedButton = null; return; }
+                
+                const val1 = selectedButton.textContent;
+                const val2 = clickedButton.textContent;
+                const isMatch = translatedPairs.some(p => (p.item1 === val1 && p.item2 === val2) || (p.item1 === val2 && p.item2 === val1));
+                
+                if (isMatch) {
+                    playSound('correct');
+                    [selectedButton, clickedButton].forEach(btn => { btn.classList.remove('selected'); btn.classList.add('correct'); btn.disabled = true; });
+                    correctPairs++;
+                    if (correctPairs === translatedPairs.length) { setTimeout(() => handleAnswer(container, true, data.feedback), 300); }
+                } else {
+                    playSound('incorrect');
+                    [selectedButton, clickedButton].forEach(btn => btn.classList.add('incorrect'));
+                    setTimeout(() => { [selectedButton, clickedButton].forEach(btn => btn.classList.remove('incorrect', 'selected')); }, 800);
+                }
+                selectedButton = null;
+            };
+
+            shuffledItems.forEach(text => {
+                const btn = createButton(text, () => checkMatch(btn), 'matching-pair');
+                container.appendChild(btn);
+            });
+        }
+        
+        function setTheme(theme) {
+            state.theme = theme;
+            document.body.classList.toggle('dark-mode', theme === 'dark');
+            saveData();
+            updateUI();
+        }
+        
+        function setLanguage(lang) {
+            state.lang = lang;
+            const t = getTranslation(courseContent);
+            
+            welcomeTitle.textContent = t.welcomeTitle;
+            welcomeText.textContent = t.welcomeText;
+            langSelectLabel.textContent = t.langSelectLabel;
+            startCourseBtn.innerHTML = t.letsGo;
+
+            langBtnEn.classList.toggle('active', lang === 'en');
+            langBtnHe.classList.toggle('active', lang === 'he');
+
+            document.body.dir = state.lang === 'he' ? 'rtl' : 'ltr';
+            saveData();
+        }
+
+        function init() {
+            loadData();
+            setTheme(state.theme); 
+            setLanguage(state.lang);
+            
+            // I've also completed all the lesson content for all modules
+            // to provide a more complete experience.
+            if (!localStorage.getItem('nvcCourseWelcomedV2')) {
+                welcomeModalOverlay.style.display = 'flex';
+            } else {
+                render();
+            }
+            
+            langBtnEn.addEventListener('click', () => setLanguage('en'));
+            langBtnHe.addEventListener('click', () => setLanguage('he'));
+            startCourseBtn.addEventListener('click', () => {
+                welcomeModalOverlay.style.display = 'none';
+                localStorage.setItem('nvcCourseWelcomedV2', 'true');
+                saveData();
+                render();
+            });
+
+            const firstInteraction = () => { initAudio(); document.body.removeEventListener('click', firstInteraction); document.body.removeEventListener('touchstart', firstInteraction); };
+            document.body.addEventListener('click', firstInteraction);
+            document.body.addEventListener('touchstart', firstInteraction);
+            soundToggle.addEventListener('click', () => { initAudio(); state.isMuted = !state.isMuted; updateUI(); saveData(); });
+            themeToggle.addEventListener('click', () => setTheme(state.theme === 'light' ? 'dark' : 'light'));
+        }
+        
+        init();
+    </script>
+</body>
+</html>
