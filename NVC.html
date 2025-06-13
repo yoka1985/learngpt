@@ -8,6 +8,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-M27LTF4SQG"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      // Config will be called later after consent is given.
+    </script>
+
     <style>
         :root {
             --green: #58cc02;
@@ -197,7 +206,7 @@
         .btn.correct { background-color: var(--green); border-color: var(--green); color: white; animation: bounce 0.5s; }
         .btn.incorrect { background-color: var(--light-red); border-color: var(--light-red); color: white; }
         
-        footer { width: 100%; position: relative; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; }
+        footer { width: 100%; position: relative; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
         
         .giraffe-container { display: flex; align-items: flex-end; gap: 10px; margin-top: 1rem; }
         #giraffe-svg-container { width: 80px; height: auto; flex-shrink: 0; display: flex; justify-content: center; align-items: flex-end; }
@@ -219,7 +228,7 @@
         .matching-pair { min-height: var(--button-height); display: flex; align-items: center; justify-content: center; padding: 0.75rem; background: var(--bg-secondary); transition: background 0.3s; border: 2px solid var(--border-color); border-radius: var(--border-radius); box-shadow: 0 4px 0 var(--shadow-color); cursor: grab; user-select: none; font-weight: 700; text-align: center; }
         .matching-pair.selected { background: var(--blue); color: white; border-color: var(--blue); }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem;}
         .modal { background: var(--bg-secondary); padding: 2rem; border-radius: var(--border-radius); max-width: 90%; width: 400px; text-align: center; animation: bounce-in 0.4s; }
         .modal h3 { margin-top: 0; color: var(--blue); }
         .modal .btn { margin-top: 1rem; }
@@ -228,7 +237,20 @@
         .modal .btn-group { display: flex; gap: 1rem; justify-content: center;}
         .modal .btn-group .btn { width: auto; padding: 0.5rem 1.5rem; }
         .modal .btn-group .btn.active { background-color: var(--blue); color: white; }
+        #policy-text { text-align: left; max-height: 300px; overflow-y: auto; font-size: 0.9rem; }
+        #policy-text a { color: var(--blue); }
+
+        #cookie-consent-banner { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-secondary); padding: 1rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: none; align-items: center; justify-content: center; gap: 1rem; z-index: 2000; text-align: center; flex-wrap: wrap; }
+        #cookie-consent-banner p { margin: 0 1rem 0.5rem 1rem; flex-basis: 100%; }
+        #cookie-consent-banner .cookie-buttons { display: flex; gap: 1rem; }
         
+        .footer-content { text-align: center; }
+        .footer-links { margin-bottom: 1rem; }
+        .footer-links a, .footer-links button { color: var(--text-secondary); text-decoration: none; margin: 0 0.5rem; font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0; }
+        .footer-links a:hover, .footer-links button:hover { text-decoration: underline; }
+        .completion-actions { margin-top: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; width: 100%; max-width: 300px;}
+        #reset-progress-btn { font-size: 0.8rem; color: var(--text-secondary); text-decoration: underline; background: none; border: none; cursor: pointer;}
+
         @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         @keyframes bounce-in { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
@@ -255,6 +277,25 @@
             <button id="start-course-btn" class="btn btn-primary"></button>
         </div>
     </div>
+    
+    <div id="policy-modal-overlay" class="modal-overlay">
+        <div class="modal">
+            <h3 id="policy-title"></h3>
+            <div id="policy-text"></div>
+            <button id="close-policy-btn" class="btn btn-primary"></button>
+        </div>
+    </div>
+    
+    <div id="reset-confirm-modal-overlay" class="modal-overlay">
+        <div class="modal">
+            <h3 id="reset-confirm-title"></h3>
+            <p id="reset-confirm-text"></p>
+            <div class="btn-group">
+                <button id="confirm-reset-btn" class="btn"></button>
+                <button id="cancel-reset-btn" class="btn btn-primary"></button>
+            </div>
+        </div>
+    </div>
    
     <div id="app-wrapper">
         <header>
@@ -276,13 +317,28 @@
         <main id="content-area"></main>
 
         <footer>
-            <div class="giraffe-container">
-                <div id="giraffe-svg-container">
-                    <!-- Giraffe SVG will be injected here by JavaScript -->
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="#" id="support-link" target="_blank"></a>
+                    <a href="#" id="terms-link"></a>
+                    <a href="#" id="privacy-link"></a>
                 </div>
-                <div id="giraffe-speech" class="speech-bubble"></div>
+                <div class="giraffe-container">
+                    <div id="giraffe-svg-container">
+                        <!-- Giraffe SVG will be injected here by JavaScript -->
+                    </div>
+                    <div id="giraffe-speech" class="speech-bubble"></div>
+                </div>
             </div>
         </footer>
+    </div>
+    
+    <div id="cookie-consent-banner">
+        <p id="cookie-text"></p>
+        <div class="cookie-buttons">
+            <button id="accept-cookies-btn" class="btn btn-primary"></button>
+            <button id="decline-cookies-btn" class="btn"></button>
+        </div>
     </div>
     
     <script>
@@ -304,6 +360,29 @@
         const langBtnHe = document.getElementById('lang-btn-he');
         const startCourseBtn = document.getElementById('start-course-btn');
 
+        // Policy Modal
+        const policyModalOverlay = document.getElementById('policy-modal-overlay');
+        const policyTitle = document.getElementById('policy-title');
+        const policyText = document.getElementById('policy-text');
+        const closePolicyBtn = document.getElementById('close-policy-btn');
+
+        // Reset Confirm Modal
+        const resetConfirmModalOverlay = document.getElementById('reset-confirm-modal-overlay');
+        const resetConfirmTitle = document.getElementById('reset-confirm-title');
+        const resetConfirmText = document.getElementById('reset-confirm-text');
+        const confirmResetBtn = document.getElementById('confirm-reset-btn');
+        const cancelResetBtn = document.getElementById('cancel-reset-btn');
+
+        // Cookie Banner
+        const cookieBanner = document.getElementById('cookie-consent-banner');
+        const cookieText = document.getElementById('cookie-text');
+        const acceptCookiesBtn = document.getElementById('accept-cookies-btn');
+        const declineCookiesBtn = document.getElementById('decline-cookies-btn');
+
+        // Footer Links
+        const supportLink = document.getElementById('support-link');
+        const termsLink = document.getElementById('terms-link');
+        const privacyLink = document.getElementById('privacy-link');
 
         // --- Giraffe SVGs representing growth ---
         const giraffeSVGs = [
@@ -361,6 +440,19 @@
                 finalTitle: "You've learned the core path! 🎉",
                 finalContent: "Congratulations! You've walked through the four steps of NVC. You now have the tools to express yourself honestly and listen with compassion. This is a lifelong practice.",
                 finalBot: "Your heart is speaking so clearly! 💖",
+                feedbackCTA: "Give Feedback",
+                supportProject: "Support this project",
+                terms: "Terms of Use",
+                privacy: "Privacy Policy",
+                resetProgress: "Reset Progress",
+                cookieText: "We use cookies to improve your experience and analyze site traffic.",
+                accept: "Accept",
+                decline: "Decline",
+                close: "Close",
+                resetConfirmTitle: "Are you sure?",
+                resetConfirmText: "This will permanently delete all your progress.",
+                confirmReset: "Yes, Reset",
+                cancel: "Cancel",
             },
             he: {
                 welcomeTitle: "ברוכים הבאים לתקשורת מקרבת!",
@@ -380,6 +472,19 @@
                 finalTitle: "למדתם את שביל הליבה! 🎉",
                 finalContent: "כל הכבוד! עברתם דרך ארבעת הצעדים של תקשורת מקרבת. כעת יש לכם כלים להביע את עצמכם בכנות ולהקשיב בחמלה. זוהי דרך חיים.",
                 finalBot: "הלב שלכם מדבר כל כך ברור! 💖",
+                feedbackCTA: "מתן משוב",
+                supportProject: "תמכו בפרויקט",
+                terms: "תנאי שימוש",
+                privacy: "מדיניות פרטיות",
+                resetProgress: "איפוס התקדמות",
+                cookieText: "אנו משתמשים בעוגיות (cookies) כדי לשפר את חווית המשתמש ולנתח את תעבורת האתר.",
+                accept: "אישור",
+                decline: "סירוב",
+                close: "סגירה",
+                resetConfirmTitle: "האם אתם בטוחים?",
+                resetConfirmText: "פעולה זו תמחק את כל ההתקדמות שלכם לצמיתות.",
+                confirmReset: "כן, אפסו",
+                cancel: "ביטול",
             }
         };
 
@@ -492,6 +597,7 @@
                 button.disabled = isLocked;
                 button.innerHTML = `<div class="stage-icon">${isCompleted ? '⭐' : moduleData.icon}</div><div class="stage-title-map">${getTranslation(moduleData.title)}</div>`;
                 button.onclick = () => { 
+                    gtag('event', 'module_start', { 'module_id': moduleData.id });
                     state.view = 'stage'; 
                     state.activeModule = { id: moduleData.id, screen: 0, lives: 3 }; 
                     render(); 
@@ -555,10 +661,12 @@
         
         function completeModule() {
             if (!state.completedModules.includes(state.activeModule.id)) {
+                gtag('event', 'module_complete', { 'module_id': state.activeModule.id });
                 state.completedModules.push(state.activeModule.id);
                 state.xp += 25;
             }
             if (state.completedModules.length === modules.length) {
+                gtag('event', 'level_complete', { 'level_id': 1 });
                 state.view = 'final';
             } else {
                 state.view = 'map';
@@ -569,7 +677,7 @@
 
         function handleAnswer(button, isCorrect, feedbackData) {
             const t = getTranslation(courseContent);
-            contentArea.querySelectorAll('button').forEach(b => b.disabled = true);
+            contentArea.querySelectorAll('button:not(.btn-primary)').forEach(b => b.disabled = true);
             const feedbackSection = document.createElement('div');
             const nextButtonContainer = document.createElement('div');
             feedbackSection.id = 'feedback-section';
@@ -595,6 +703,7 @@
                 const nextButton = createButton(t.continue, () => advanceScreen(), 'btn-primary');
                 nextButtonContainer.appendChild(nextButton);
             } else {
+                gtag('event', 'answer_incorrect', { 'module_id': state.activeModule.id, 'screen_id': state.activeModule.screen });
                 playSound('incorrect');
                 state.streak = 0;
                 state.activeModule.lives--;
@@ -627,6 +736,20 @@
             content.className = 'lesson-content';
             content.textContent = t.finalContent;
             contentArea.appendChild(content);
+
+            const completionActions = document.createElement('div');
+            completionActions.className = 'completion-actions';
+            
+            const feedbackButton = createButton(t.feedbackCTA, () => window.open('https://forms.gle/V5ZWLzknQLtLNEUg8', '_blank'), 'btn-primary');
+            completionActions.appendChild(feedbackButton);
+
+            const resetButton = document.createElement('button');
+            resetButton.id = 'reset-progress-btn';
+            resetButton.textContent = t.resetProgress;
+            resetButton.onclick = showResetConfirmModal;
+            completionActions.appendChild(resetButton);
+
+            contentArea.appendChild(completionActions);
             
             for(let i=0; i<100; i++) { const c = document.createElement('div'); c.className='confetti'; c.style.left=Math.random()*100+'vw'; c.style.animationDuration=Math.random()*2+3+'s'; c.style.backgroundColor=`hsl(${Math.random()*360},100%,50%)`; document.body.appendChild(c); setTimeout(() => { c.remove() }, 5000); }
             giraffeSpeech.textContent = t.finalBot;
@@ -644,8 +767,20 @@
             title.className = 'completion-title';
             title.textContent = t.moduleComplete;
             contentArea.appendChild(title);
+
+            const completionActions = document.createElement('div');
+            completionActions.className = 'completion-actions';
+            
             const continueButton = createButton(t.continueToMap, () => completeModule(), 'btn-primary');
-            contentArea.appendChild(continueButton);
+            completionActions.appendChild(continueButton);
+
+            const resetButton = document.createElement('button');
+            resetButton.id = 'reset-progress-btn';
+            resetButton.textContent = t.resetProgress;
+            resetButton.onclick = showResetConfirmModal;
+            completionActions.appendChild(resetButton);
+
+            contentArea.appendChild(completionActions);
         }
 
         function renderModuleFailedScreen() {
@@ -670,6 +805,14 @@
         }
 
         function renderExerciseScreen(screenData) {
+            // An exercise screen doesn't have its own title, it continues from the module title
+            // So we find the module title to display
+            const module = modules.find(m => m.id === state.activeModule.id);
+            const title = document.createElement('h1');
+            title.className = 'screen-title';
+            title.textContent = getTranslation(module.title);
+            contentArea.appendChild(title);
+            
             const questionText = getTranslation(screenData.question);
             const question = document.createElement('p'); question.className = 'exercise-question'; question.textContent = questionText; contentArea.appendChild(question);
             const choiceContainer = document.createElement('div');
@@ -746,6 +889,18 @@
             welcomeText.textContent = t.welcomeText;
             langSelectLabel.textContent = t.langSelectLabel;
             startCourseBtn.innerHTML = t.letsGo;
+            supportLink.textContent = t.supportProject;
+            termsLink.textContent = t.terms;
+            privacyLink.textContent = t.privacy;
+            cookieText.textContent = t.cookieText;
+            acceptCookiesBtn.textContent = t.accept;
+            declineCookiesBtn.textContent = t.decline;
+            closePolicyBtn.textContent = t.close;
+            resetConfirmTitle.textContent = t.resetConfirmTitle;
+            resetConfirmText.textContent = t.resetConfirmText;
+            confirmResetBtn.textContent = t.confirmReset;
+            cancelResetBtn.textContent = t.cancel;
+
 
             langBtnEn.classList.toggle('active', lang === 'en');
             langBtnHe.classList.toggle('active', lang === 'he');
@@ -754,13 +909,45 @@
             saveData();
         }
 
+        function showPolicy(type) {
+            const t = getTranslation(courseContent);
+            const contactEmail = 'jonathan10mvpsin20days@gmail.com';
+            policyTitle.textContent = t[type];
+            let policyContent = `<p>Last updated: June 13, 2024</p><p>For any questions, please contact us at <a href="mailto:${contactEmail}">${contactEmail}</a>.</p>`;
+            if (type === 'privacy') {
+                policyContent += `<p>We use Google Analytics to collect anonymous data about website usage to improve our service. This data is not personally identifiable. You can accept or decline this via the cookie consent banner. We do not sell or share your data with third parties.</p>`;
+            } else {
+                policyContent += `<p>By using this service, you agree to use it for educational purposes only. You agree not to reproduce or distribute the content without permission.</p>`;
+            }
+            policyText.innerHTML = policyContent;
+            policyModalOverlay.style.display = 'flex';
+        }
+
+        function showResetConfirmModal() {
+            resetConfirmModalOverlay.style.display = 'flex';
+        }
+
+        function resetProgress() {
+            localStorage.removeItem('nvcCourseProgress');
+            localStorage.removeItem('nvcCourseWelcomedV2');
+            localStorage.removeItem('cookieConsent');
+            location.reload();
+        }
+
         function init() {
             loadData();
             setTheme(state.theme); 
             setLanguage(state.lang);
             
-            // I've also completed all the lesson content for all modules
-            // to provide a more complete experience.
+            supportLink.href = "https://revolut.me/yonatahf89";
+            
+            const cookieConsent = localStorage.getItem('cookieConsent');
+            if (cookieConsent === 'true') {
+                gtag('config', 'G-M27LTF4SQG');
+            } else if (!cookieConsent) {
+                cookieBanner.style.display = 'flex';
+            }
+            
             if (!localStorage.getItem('nvcCourseWelcomedV2')) {
                 welcomeModalOverlay.style.display = 'flex';
             } else {
@@ -776,6 +963,27 @@
                 render();
             });
 
+            // Footer and Modal Listeners
+            termsLink.addEventListener('click', (e) => { e.preventDefault(); showPolicy('terms'); });
+            privacyLink.addEventListener('click', (e) => { e.preventDefault(); showPolicy('privacy'); });
+            closePolicyBtn.addEventListener('click', () => { policyModalOverlay.style.display = 'none'; });
+
+            // Cookie Listeners
+            acceptCookiesBtn.addEventListener('click', () => {
+                localStorage.setItem('cookieConsent', 'true');
+                cookieBanner.style.display = 'none';
+                gtag('config', 'G-M27LTF4SQG');
+            });
+            declineCookiesBtn.addEventListener('click', () => {
+                localStorage.setItem('cookieConsent', 'false');
+                cookieBanner.style.display = 'none';
+            });
+            
+            // Reset Listeners
+            confirmResetBtn.addEventListener('click', resetProgress);
+            cancelResetBtn.addEventListener('click', () => { resetConfirmModalOverlay.style.display = 'none'; });
+
+            // Other Listeners
             const firstInteraction = () => { initAudio(); document.body.removeEventListener('click', firstInteraction); document.body.removeEventListener('touchstart', firstInteraction); };
             document.body.addEventListener('click', firstInteraction);
             document.body.addEventListener('touchstart', firstInteraction);
