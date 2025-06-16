@@ -1,1 +1,965 @@
 
+ <!DOCTYPE html> 
+ <html lang="en"> 
+ <head> 
+     <meta charset="UTF-8"> 
+     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+     <title>Critical Thinking 101</title> 
+     <link rel="preconnect" href="https://fonts.googleapis.com"> 
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet"> 
+
+     <!-- Google tag (gtag.js) --> 
+     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L8Q143JV5X"></script> 
+     <script> 
+       window.dataLayer = window.dataLayer || []; 
+       function gtag(){dataLayer.push(arguments);} 
+       gtag('js', new Date()); 
+       // Config will be called later after consent 
+     </script> 
+
+     <style> 
+         :root { 
+             --green: #58cc02; 
+             --light-green: #89e219; 
+             --yellow: #ffc800; 
+             --blue: #1cb0f6; 
+             --pink: #ff80bf;
+             --red: #ff4b4b; 
+             --light-red: #ff8989; 
+             --border-radius: 16px; 
+             --button-height: 60px; 
+
+             /* Light Theme */ 
+             --bg-primary: #f7f7f7; 
+             --bg-secondary: #ffffff; 
+             --text-primary: #4b4b4b; 
+             --text-secondary: #777777; 
+             --border-color: #e5e5e5; 
+             --shadow-color: #00000020; 
+         } 
+          
+         body.dark-mode { 
+             /* Dark Theme */ 
+             --bg-primary: #121212; 
+             --bg-secondary: #1E1E1E; 
+             --text-primary: #E0E0E0; 
+             --text-secondary: #A0A0A0; 
+             --border-color: #333333; 
+             --shadow-color: #00000040; 
+         } 
+
+         *, *::before, *::after { 
+             box-sizing: border-box; 
+             -webkit-tap-highlight-color: transparent; 
+         } 
+
+         html, body { 
+             height: 100%; 
+             margin: 0; 
+             padding: 0; 
+         } 
+
+         body { 
+             font-family: 'Nunito', sans-serif; 
+             background: var(--bg-primary); 
+             color: var(--text-primary); 
+             display: flex; 
+             justify-content: center; 
+             align-items: flex-start; 
+             padding: 1rem; 
+             overflow-y: auto; 
+             transition: background 0.3s, color 0.3s; 
+         } 
+
+         body.rtl { direction: rtl; } 
+
+         #app-wrapper { 
+             width: 100%; 
+             max-width: 600px; 
+             display: flex; 
+             flex-direction: column; 
+         } 
+
+         /* --- Header & Progress --- */ 
+         header { 
+             width: 100%; 
+             padding: 1rem 0; 
+             margin-bottom: 1rem; 
+         } 
+
+         .header-controls { 
+             display: flex; 
+             justify-content: space-between; 
+             align-items: center; 
+             margin-bottom: 1rem; 
+         } 
+
+         .xp-display, .lives-display { 
+             font-weight: 900; 
+             font-size: 1.2rem; 
+             color: var(--yellow); 
+             text-shadow: 1px 1px 2px #00000030; 
+         } 
+         .lives-display { color: var(--red); letter-spacing: 0.2em; } 
+         .header-left, .header-right { display: flex; align-items: center; gap: 1rem; } 
+
+         .sound-toggle, .lang-toggle, .theme-toggle { 
+             font-size: 1.2rem; 
+             font-weight: 700; 
+             cursor: pointer; 
+             border: none; 
+             background: none; 
+             color: var(--text-secondary); 
+         } 
+         .lang-toggle.active { color: var(--blue); text-decoration: underline;} 
+
+         .progress-bar-container { 
+             width: 100%; 
+             height: 20px; 
+             background-color: var(--border-color); 
+             border-radius: 10px; 
+             border: 2px solid var(--border-color); 
+             overflow: hidden; 
+         } 
+
+         .progress-bar { 
+             width: 0%; 
+             height: 100%; 
+             background: linear-gradient(90deg, var(--light-green), var(--green)); 
+             border-radius: 8px; 
+             transition: width 0.5s ease-out; 
+         } 
+          
+         /* --- Main Content & Map --- */ 
+         #content-area { 
+             flex-grow: 1; 
+             width: 100%; 
+             padding: 1.5rem; 
+             background: var(--bg-secondary); 
+             border-radius: var(--border-radius); 
+             border: 1px solid var(--border-color); 
+             box-shadow: 0 8px 24px #0000001a; 
+             display: flex; 
+             flex-direction: column; 
+             align-items: center; 
+             justify-content: flex-start; 
+             min-height: 400px; 
+             transition: background 0.3s, border-color 0.3s; 
+         } 
+
+         .map-view { 
+             width: 100%; 
+             display: flex; 
+             flex-direction: column; 
+             align-items: center; 
+             gap: 40px; 
+             padding: 2rem 0; 
+         } 
+
+         .stage-node { position: relative; } 
+
+         .stage-button { 
+             width: 100px; 
+             height: 100px; 
+             border-radius: 50%; 
+             border: 8px solid var(--bg-secondary); 
+             box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 var(--gray-300); 
+             display: flex; 
+             flex-direction: column; 
+             align-items: center; 
+             justify-content: center; 
+             font-weight: 900; 
+             cursor: pointer; 
+             transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s, color 0.3s; 
+         } 
+         .stage-button:active { 
+             transform: translateY(2px); 
+             box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 2px 0 var(--gray-300); 
+         } 
+
+         .stage-icon { font-size: 2.5rem; } 
+         .stage-title-map { font-size: 0.9rem; margin-top: 5px; } 
+
+         .stage-button.unlocked { background: var(--green); color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 #3a8a00; animation: pulse 1.5s infinite; } 
+         .stage-button.completed { background: var(--yellow); color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1), 0 4px 0 #c79a00; } 
+         .stage-button.locked { background: var(--border-color); color: var(--text-secondary); cursor: not-allowed; box-shadow: 0 4px 0 var(--gray-300); } 
+          
+         .brain-map-icon { position: absolute; width: 60px; height: 60px; bottom: -25px; left: -45px; transform: rotate(-15deg); transition: all 0.5s ease-in-out; } 
+         body.rtl .brain-map-icon { left: auto; right: -45px; transform: rotate(15deg); } 
+          
+         .level-title { width: 100%; text-align: center; font-size: 1.5rem; font-weight: 900; color: var(--text-secondary); padding-bottom: 1rem; margin-bottom: 2rem; border-bottom: 2px solid var(--border-color); } 
+
+         .screen-title, .completion-title { font-size: 1.8rem; font-weight: 900; text-align: center; margin-bottom: 1.5rem; } 
+         .completion-icon { font-size: 4rem; animation: bounce-in 0.5s ease-out; } 
+         .lesson-content, .exercise-question { font-size: 1.1rem; line-height: 1.6; text-align: center; margin-bottom: 2rem; } 
+         .lesson-example { width: 100%; padding: 1rem; background: var(--bg-primary); border-left: 5px solid var(--blue); border-radius: 8px; margin-top: 1.5rem; font-style: italic; transition: background 0.3s; } 
+         body.rtl .lesson-example { border-left: none; border-right: 5px solid var(--blue); } 
+
+         .btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: var(--button-height); font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--text-primary); background-color: var(--bg-secondary); border: 2px solid var(--border-color); border-radius: var(--border-radius); cursor: pointer; padding: 0.5rem 1rem; text-align: center; box-shadow: 0 4px 0 var(--shadow-color); transition: all 0.2s ease; } 
+         .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--shadow-color); } 
+         .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 var(--shadow-color); } 
+         .btn:disabled { cursor: not-allowed; color: var(--text-secondary); } 
+         .btn-primary { background-color: var(--green); color: white; border-color: var(--green); } 
+         .btn-primary:hover:not(:disabled) { background-color: var(--light-green); border-color: var(--light-green); } 
+         .btn.correct { background-color: var(--green); border-color: var(--green); color: white; animation: bounce 0.5s; } 
+         .btn.incorrect { background-color: var(--light-red); border-color: var(--light-red); color: white; } 
+          
+         footer { width: 100%; position: relative; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; } 
+         .footer-links a, #reset-progress-btn { color: var(--text-secondary); text-decoration: none; margin: 0 0.5rem; font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0; } 
+         .footer-links a:hover, #reset-progress-btn:hover { text-decoration: underline; } 
+
+         .brain-container { display: flex; align-items: flex-end; gap: 10px; margin-top: 1rem; } 
+         #brain-avatar-container { width: 80px; height: 80px; flex-shrink: 0; }
+         #brain-avatar-container svg { width: 100%; height: auto; }
+          
+         .speech-bubble { position: relative; background: var(--bg-secondary); border-radius: var(--border-radius); padding: 1rem; font-weight: 700; box-shadow: 0 4px 0 var(--shadow-color); border: 1px solid var(--border-color); width: 100%; } 
+         .speech-bubble::before { content: ''; position: absolute; left: -10px; bottom: 15px; width: 0; height: 0; border: 10px solid transparent; border-right-color: var(--border-color); border-left: 0; border-bottom: 0; margin-top: -5px; margin-left: -10px; transition: border-right-color 0.3s; } 
+         .speech-bubble::after { content: ''; position: absolute; left: -8px; bottom: 15px; width: 0; height: 0; border: 10px solid transparent; border-right-color: var(--bg-secondary); border-left: 0; border-bottom: 0; margin-top: -5px; margin-left: -10px; transition: border-right-color 0.3s; }
+         body.rtl .speech-bubble::before { left: auto; right: -10px; border-right-color: transparent; border-left-color: var(--border-color); border-right: 0; border-left: 10px; margin-left: 0; margin-right: -10px; transition: border-left-color 0.3s; } 
+         body.rtl .speech-bubble::after { left: auto; right: -8px; border-right-color: transparent; border-left-color: var(--bg-secondary); border-right: 0; border-left: 10px; margin-left: 0; margin-right: -10px; transition: border-left-color 0.3s; } 
+          
+         #feedback-section { width: 100%; text-align: center; padding: 1rem; } 
+         .feedback-message { min-height: 80px; border-radius: var(--border-radius); padding: 1rem; margin-bottom: 1rem; font-weight: 700; font-size: 1.2rem; display: none; } 
+         .feedback-message.correct { display: block; background: #e1f9d3; color: #3a8a00; border-left: 5px solid var(--green); } 
+         .feedback-message.incorrect { display: block; background: #ffebee; color: #c00c00; border-left: 5px solid var(--red); } 
+         body.dark-mode .feedback-message.correct { background: #2c4a27; color: #b2d8b2; } 
+         body.dark-mode .feedback-message.incorrect { background: #5c2c2c; color: #f2c2c2; } 
+         body.rtl .feedback-message.correct, body.rtl .feedback-message.incorrect { border-left: none; border-right: 5px solid var(--green); } 
+         body.rtl .feedback-message.incorrect { border-right-color: var(--red); } 
+         #next-button-container { margin-top: 1rem; width: 100%; max-width: 300px; } 
+
+         .matching-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; } 
+         .matching-pair { min-height: var(--button-height); display: flex; align-items: center; justify-content: center; padding: 0.75rem; background: var(--bg-secondary); transition: background 0.3s; border: 2px solid var(--border-color); border-radius: var(--border-radius); box-shadow: 0 4px 0 var(--shadow-color); cursor: grab; user-select: none; } 
+         .matching-pair.selected { background: var(--blue); color: white; border-color: var(--blue); } 
+
+         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; } 
+         .modal { background: var(--bg-secondary); padding: 2rem; border-radius: var(--border-radius); max-width: 90%; width: 400px; text-align: center; animation: bounce-in 0.4s; } 
+         .modal h3 { margin-top: 0; color: var(--blue); } 
+         .modal .btn { margin-top: 1.5rem; } 
+         .modal .lang-switcher { margin-top: 1rem; } 
+          
+         #cookie-consent-banner { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-secondary); padding: 1rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: none; align-items: center; justify-content: center; gap: 1rem; z-index: 2000; text-align: center; } 
+         #cookie-consent-banner p { margin: 0; max-width: 600px; } 
+         #cookie-consent-banner .btn { white-space: nowrap; } 
+
+         .waiting-list-container { text-align:center; padding: 2rem; border: 2px dashed var(--blue); border-radius: var(--border-radius); margin-top: 2rem; } 
+         .waiting-list-container p { font-size: 1.1rem; } 
+
+         @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } } 
+         @keyframes bounce-in { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } } 
+         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } } 
+         .confetti { position: fixed; top: -10px; width: 10px; height: 10px; opacity: 0.8; animation: fall 3s linear infinite; } 
+         @keyframes fall { to { transform: translateY(100vh); opacity: 0; } } 
+          
+         @media (max-width: 600px) { body { padding: 0.5rem; } #content-area { padding: 1rem; } .screen-title { font-size: 1.5rem; } .lesson-content, .exercise-question { font-size: 1rem; } .btn { font-size: 1rem; } .matching-grid { grid-template-columns: 1fr; } #cookie-consent-banner { flex-direction: column; } } 
+     </style> 
+ </head> 
+ <body> 
+     <div id="policy-modal-overlay" class="modal-overlay"> 
+         <div id="policy-modal" class="modal"> 
+             <h3 id="policy-title"></h3> 
+             <p id="policy-text" style="text-align: left; max-height: 300px; overflow-y: auto;"></p> 
+             <button id="close-policy-btn" class="btn btn-primary">Close</button> 
+         </div> 
+     </div> 
+     <div id="welcome-modal-overlay" class="modal-overlay"> 
+         <div class="modal"> 
+             <h3 id="welcome-title"></h3> 
+             <p id="welcome-text"></p> 
+             <div class="lang-switcher"> 
+                 <button id="modal-lang-en" class="lang-toggle active">EN</button> 
+                 <span>|</span> 
+                 <button id="modal-lang-he" class="lang-toggle">עב</button> 
+             </div> 
+             <button id="start-course-btn" class="btn btn-primary"></button> 
+         </div> 
+     </div> 
+     <div id="tip-modal-overlay" class="modal-overlay"> 
+         <div id="tip-modal" class="modal"> 
+             <h3 id="tip-title"></h3> 
+             <p id="tip-text"></p> 
+             <button id="close-tip-btn" class="btn btn-primary">Got it!</button> 
+         </div> 
+     </div> 
+     <div id="app-wrapper"> 
+         <header> 
+             <div class="header-controls"> 
+                 <div class="header-left"> 
+                      <div class="xp-display">💎 0 XP</div> 
+                 </div> 
+                 <div class="header-right"> 
+                     <div id="lives-display" class="lives-display"></div> 
+                     <button id="theme-toggle" class="theme-toggle">🌙</button> 
+                     <button id="sound-toggle" class="sound-toggle">🔊</button> 
+                 </div> 
+             </div> 
+             <div class="progress-bar-container"> 
+                 <div id="progress-bar" class="progress-bar"></div> 
+             </div> 
+         </header> 
+
+         <main id="content-area"></main> 
+
+         <footer> 
+             <div class="footer-links"> 
+                 <a href="#" id="terms-link"></a> 
+                 <a href="#" id="privacy-link"></a> 
+             </div> 
+             <div class="brain-container"> 
+                 <div id="brain-avatar-container"></div>
+                 <div id="brain-speech" class="speech-bubble"></div> 
+             </div> 
+         </footer> 
+     </div> 
+     <div id="cookie-consent-banner"> 
+         <p id="cookie-text"></p> 
+         <div class="cookie-buttons"> 
+             <button id="accept-cookies" class="btn btn-primary"></button> 
+             <button id="decline-cookies" class="btn"></button> 
+         </div> 
+     </div> 
+      
+     <script> 
+         const contentArea = document.getElementById('content-area'); 
+         const progressBar = document.getElementById('progress-bar'); 
+         const xpDisplay = document.querySelector('.xp-display'); 
+         const livesDisplay = document.getElementById('lives-display'); 
+         const soundToggle = document.getElementById('sound-toggle'); 
+         const themeToggle = document.getElementById('theme-toggle'); 
+         const modalLangEnBtn = document.getElementById('modal-lang-en'); 
+         const modalLangHeBtn = document.getElementById('modal-lang-he'); 
+         const brainSpeech = document.getElementById('brain-speech');
+         const brainAvatarContainer = document.getElementById('brain-avatar-container');
+         const welcomeModalOverlay = document.getElementById('welcome-modal-overlay'); 
+         const welcomeTitle = document.getElementById('welcome-title'); 
+         const welcomeText = document.getElementById('welcome-text'); 
+         const startCourseBtn = document.getElementById('start-course-btn'); 
+         const tipModalOverlay = document.getElementById('tip-modal-overlay'); 
+         const tipTitle = document.querySelector('#tip-modal h3'); 
+         const tipText = document.getElementById('tip-text'); 
+         const closeTipBtn = document.getElementById('close-tip-btn'); 
+         const cookieBanner = document.getElementById('cookie-consent-banner'); 
+         const cookieText = document.getElementById('cookie-text'); 
+         const acceptCookiesBtn = document.getElementById('accept-cookies'); 
+         const declineCookiesBtn = document.getElementById('decline-cookies'); 
+         const termsLink = document.getElementById('terms-link'); 
+         const privacyLink = document.getElementById('privacy-link'); 
+         const policyModalOverlay = document.getElementById('policy-modal-overlay'); 
+         const policyTitle = document.getElementById('policy-title'); 
+         const policyText = document.getElementById('policy-text'); 
+         const closePolicyBtn = document.getElementById('close-policy-btn'); 
+
+         // --- Brain SVGs for different growth stages ---
+         const brainSVGs = [
+            // Stage 0: Baby Brain
+            `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M50 25 C25 25 25 60 50 60 C75 60 75 25 50 25 Z" fill="var(--pink)" stroke="var(--text-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M50 60 C50 75 40 80 50 90 C60 80 50 75 50 60 Z" fill="var(--pink)" stroke="var(--text-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+            // Stage 1: Growing Brain
+            `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M50 20 C20 20 20 65 50 65 C80 65 80 20 50 20 Z M50 20 C50 65 48 65 48 20" fill="var(--pink)" stroke="var(--text-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M50 65 C50 80 40 85 50 95 C60 85 50 80 50 65 Z" fill="var(--pink)" stroke="var(--text-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+            // Stage 2: Developing Brain
+            `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M48 22 C30 20 25 40 30 55 C35 70 48 70 48 22 M48 22 C60 20 75 35 70 55 C65 75 52 72 48 22 M48 45 C40 45 40 55 48 55" fill="var(--pink)" stroke="var(--text-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M49 70 C49 85 40 90 50 100 C60 90 51 85 51 70 Z" fill="var(--pink)" stroke="var(--text-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+            // Stage 3: Complex Brain
+            `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M35 25 C15 30 20 60 38 65 C50 70 50 50 40 40 C30 30 35 25 35 25 M65 25 C85 30 80 60 62 65 C50 70 50 50 60 40 C70 30 65 25 65 25 M50 30 C40 35 40 50 50 55 C60 50 60 35 50 30" fill="var(--pink)" stroke="var(--text-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M50 68 C50 83 40 88 50 98 C60 88 50 83 50 68 Z" fill="var(--pink)" stroke="var(--text-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+            // Stage 4: Enlightened Brain
+            `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><filter id="glow"><feGaussianBlur stdDeviation="3.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path d="M35 25 C15 30 20 60 38 65 C50 70 50 50 40 40 C30 30 35 25 35 25 M65 25 C85 30 80 60 62 65 C50 70 50 50 60 40 C70 30 65 25 65 25 M50 30 C40 35 40 50 50 55 C60 50 60 35 50 30" fill="var(--pink)" stroke="var(--yellow)" stroke-width="4" filter="url(#glow)"/><path d="M50 68 C50 83 40 88 50 98 C60 88 50 83 50 68 Z" fill="var(--pink)" stroke="var(--yellow)" stroke-width="4" filter="url(#glow)"/></svg>`
+         ];
+
+         let audioCtx; 
+         function initAudio() { if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { console.error("Web Audio API not supported."); } } } 
+         function playSound(type) { 
+             if (!audioCtx || state.isMuted) return; 
+             if (audioCtx.state === 'suspended') audioCtx.resume(); 
+             const o = audioCtx.createOscillator(), g = audioCtx.createGain(); 
+             o.connect(g); g.connect(audioCtx.destination); 
+             if (type === 'correct') { o.type = 'sine'; o.frequency.setValueAtTime(600, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1); g.gain.setValueAtTime(0.2, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2); o.start(); o.stop(audioCtx.currentTime + 0.2); } 
+             else if (type === 'incorrect') { o.type = 'square'; o.frequency.setValueAtTime(200, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2); g.gain.setValueAtTime(0.2, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3); o.start(); o.stop(audioCtx.currentTime + 0.3); } 
+             else if (type === 'streak' || type === 'moduleComplete') { const notes = type === 'streak' ? [600, 750, 900] : [523, 659, 783, 1046]; g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5); notes.forEach((n, i) => { const o2 = audioCtx.createOscillator(); o2.connect(g); o2.type = 'triangle'; o2.frequency.setValueAtTime(n, audioCtx.currentTime + i * 0.1); o2.start(audioCtx.currentTime + i * 0.1); o2.stop(audioCtx.currentTime + i * 0.1 + 0.1); }); } 
+         } 
+
+         let state = {}; 
+         const defaultState = { 
+             view: 'map', 
+             lang: 'en', 
+             theme: 'light', 
+             activeModule: { id: null, screen: 0, lives: 3 }, 
+             xp: 0, 
+             streak: 0, 
+             isMuted: false, 
+             completedModules: [] 
+         }; 
+          
+         const courseData = { 
+             en: { 
+                 welcomeTitle: "Welcome to Critical Thinking!", 
+                 welcomeText: "This short, interactive course will help you build a stronger mind. Learn to analyze information, spot fallacies, and identify fake news.", 
+                 letsGo: "Let's Grow! 🌱", 
+                 gotIt: "Got it!", 
+                 tipFromBot: "💡 Brain Food!", 
+                 mapSpeech: "Great work! Let's tackle the next topic.", 
+                 stageSpeech: "Let's figure this out!", 
+                 moduleComplete: "Stage Complete!", 
+                 outOfTries: "Out of Tries!", 
+                 outOfTriesMsg: "That's okay! Thinking is hard work. Let's review this stage again from the beginning.", 
+                 tryAgain: "Try Again", 
+                 continueToMap: "Continue", 
+                 level1Title: "Foundations of Critical Thinking", 
+                 finalTitle: "Course Complete! 🎉", 
+                 finalContent: "Congratulations! You've strengthened your critical thinking skills. You're now better equipped to navigate the world of information. Keep questioning!", 
+                 finalBot: "You're a certified Critical Thinker! 🧠✨", 
+                 waitingList: "Want to know when new courses are ready?", 
+                 waitingListCTA: "Join the waiting list!", 
+                 getNotified: "Get Notified 🚀", 
+                 cookieText: "We use cookies to improve your experience and analyze site traffic.", 
+                 accept: "Accept", 
+                 decline: "Decline", 
+                 terms: "Terms of Use", 
+                 privacy: "Privacy Policy", 
+                 resetProgress: "Reset Progress", 
+                 tips: [
+                    "Always ask: 'Who benefits from me believing this?'",
+                    "If a headline makes you angry, it might be designed that way. Take a deep breath before you share.",
+                    "Look for sources. If an article doesn't say where it got its information, be skeptical.",
+                    "Correlation is not causation. Just because two things happen at the same time, it doesn't mean one caused the other."
+                 ], 
+                 modules: [ 
+                     { id: 1, title: "The Premise", icon: "🧱", screens: [ 
+                         { type: 'lesson', title: 'What is a Premise?', content: "A premise is the foundation of an argument. It's the statement or fact presented as a reason to believe the conclusion.", example: "Argument: 'It's cloudy outside (premise), so it might rain (conclusion).'" },
+                         { type: 'exercise', subType: 'mcq', question: "Identify the premise: 'All birds have feathers. Since a robin is a bird, it has feathers.'", options: [{text: 'A robin is a bird', correct: false}, {text: 'All birds have feathers', correct: true}, {text: 'It has feathers', correct: false}], feedback: {correct: "Exactly! The broad statement 'All birds have feathers' is the premise the argument is built on.", incorrect: "The premise is the general rule or fact that the argument starts with."} },
+                         { type: 'lesson', title: 'Strong vs. Weak Premise', content: "A strong premise is a verifiable fact. A weak premise might be an opinion, an overgeneralization, or something that's just not true.", example: "Strong: 'Water is H₂O.'\nWeak: 'All politicians are dishonest.'" },
+                         { type: 'exercise', subType: 'ab-test', question: "Which is a stronger premise for an argument?", options: [{text: 'My grandpa says broccoli is healthy.', correct: false}, {text: 'Multiple scientific studies show broccoli has vitamins.', correct: true}], feedback: {correct: "Correct! Scientific evidence is much stronger than a single person's opinion.", incorrect: "A verifiable fact from studies is a stronger foundation than a personal opinion."} },
+                         { type: 'exercise', subType: 'matching', question: "Match the argument to its premise.", pairs: [{item1: 'My car won\'t start, so the battery must be dead.', item2: 'The car needs a working battery to start.'}, {item1: 'Socrates is mortal.', item2: 'All men are mortal.'}, {item1: 'That movie will be bad.', item2: 'The director\'s last three movies were bad.'}], feedback: {correct: "Great matches! You're getting good at identifying the foundation of an argument.", incorrect: "Try to find the base statement that each conclusion is built upon."} },
+                         { type: 'exercise', subType: 'mcq', question: "A premise is unreliable if it's based on...", options: [{text: 'A scientific fact', correct: false}, {text: 'A personal feeling or emotion', correct: true}, {text: 'A historical record', correct: false}], feedback: {correct: "Right! Feelings aren't a solid foundation for an argument because they can't be verified.", incorrect: "Facts and records can be checked. A personal feeling is not a reliable premise."} }
+                     ]}, 
+                     { id: 2, title: "Assumptions", icon: "🤔", screens: [ 
+                         { type: 'lesson', title: 'Spotting Assumptions', content: "Assumptions are the unstated beliefs that connect the premise to the conclusion. They are the 'hidden' part of an argument.", example: "Argument: 'That car is expensive, so it must be fast.'\nAssumption: 'All expensive cars are fast.'" },
+                         { type: 'exercise', subType: 'mcq', question: "Argument: 'She reads a lot, so she must be smart.' What is the hidden assumption?", options: [{text: 'Reading is fun', correct: false}, {text: 'People who read a lot are smart', correct:true}, {text: 'Smart people read a lot', correct: false}], feedback: {correct: "You found it! The argument assumes a direct link between reading quantity and intelligence.", incorrect: "The assumption is the unstated idea that makes the conclusion seem to follow the premise."} },
+                         { type: 'lesson', title: 'Assumptions in News', content: "Headlines often rely on assumptions to grab your attention. Learning to see them is key to not being misled.", example: "Headline: 'MILLENNIALS are killing the napkin industry!'\nAssumption: 'The napkin industry is actually failing AND millennials are the sole cause.'" },
+                         { type: 'exercise', subType: 'ab-test', question: "Which headline has a bigger hidden assumption?", options: [{text: 'New Study Finds Link Between Sugar and Cavities', correct: false}, {text: 'This ONE Weird Trick Will Make You a Millionaire!', correct: true}], feedback: {correct: "Exactly! The second one assumes a single, easy trick can make anyone rich, which is a huge, unproven leap.", incorrect: "The 'Weird Trick' headline makes a much bigger, less believable assumption."} },
+                         { type: 'exercise', subType: 'mcq', question: "Argument: 'The new employee is very quiet. They must be unfriendly.' What's the assumption?", options: [{text: 'New employees are always quiet', correct: false}, {text: 'Quiet people are unfriendly', correct: true}, {text: 'Unfriendly people are quiet', correct: false}], feedback: {correct: "Correct! The argument unfairly assumes that being quiet is a sign of being unfriendly.", incorrect: "The hidden assumption is the bridge between 'quiet' and 'unfriendly'."} },
+                         { type: 'exercise', subType: 'ab-test', question: "Which statement relies less on assumptions?", options: [{text: 'He wears glasses, so he must be a genius.', correct: false}, {text: 'She finished the marathon, so she must be tired.', correct: true}], feedback: {correct: "Right. It's a much more reasonable assumption that running a marathon causes tiredness than that glasses are a sign of genius.", incorrect: "Think about which conclusion is more likely to be true based on the premise."} }
+                     ]}, 
+                     { id: 3, title: "Evidence", icon: "🔎", screens: [ 
+                         { type: 'lesson', title: "Fact vs. Opinion", content: "A fact can be proven true or false. An opinion is a belief or judgment that can't be proven.", example: "Fact: 'The Earth is round.'\nOpinion: 'The Earth is beautiful.'" },
+                         { type: 'exercise', subType: 'ab-test', question: "Which statement is a fact?", options: [{text: 'Comedy movies are the best kind of movie.', correct: false}, {text: 'The movie "Titanic" was released in 1997.', correct: true}], feedback: {correct: "That's right! The release date can be proven. Which movie is 'best' is an opinion.", incorrect: "Remember, a fact is something you can look up and verify. An opinion is what someone believes."} },
+                         { type: 'lesson', title: 'The Source Matters', content: "Always ask: who is providing this information? Are they an expert? Do they have a reason to be biased?", example: "A study on the health effects of soda is more credible if it's from a university, not the soda company itself." },
+                         { type: 'exercise', subType: 'mcq', question: "Who is the most credible source for information on climate change?", options: [{text: 'A popular celebrity', correct: false}, {text: 'A major scientific organization', correct: true}, {text: 'An anonymous internet forum', correct: false}], feedback: {correct: "Correct! A scientific organization has the most expertise and accountability.", incorrect: "The most credible source is the one with the most relevant expertise and the least bias."} },
+                         { type: 'exercise', subType: 'matching', question: "Match the claim to the type of evidence.", pairs: [{item1: 'My friend got better after taking this pill.', item2: 'Anecdotal'}, {item1: '9 out of 10 dentists agree.', item2: 'Statistical'}, {item1: 'The manual says this is the power button.', item2: 'Testimonial'}], feedback: {correct: "Excellent work! You can distinguish between different kinds of evidence.", incorrect: "Think about whether the evidence is a story, a number, or an official statement."} },
+                         { type: 'exercise', subType: 'mcq', question: "You read a surprising health claim online. What is a good first step?", options: [{text: 'Share it immediately', correct: false}, {text: 'Look for the original source of the claim', correct: true}, {text: 'Assume it is true', correct: false}], feedback: {correct: "Perfect! Always try to trace information back to its source before you trust or share it.", incorrect: "Before believing or sharing, the best move is to check where the information comes from."} }
+                     ]}, 
+                     { id: 4, title: "Fake News", icon: "📰", screens: [ 
+                         { type: 'lesson', title: 'Signs of Fake News', content: "Look for red flags: shocking or emotional headlines, no author, no sources, and spelling/grammar mistakes. Real news is usually calm and professional.", example: "FAKE: 'SHOCKING: DOCTORS HATE THIS ONE FRUIT!'\nREAL: 'New Study Examines a Fruit's Impact on Health.'" },
+                         { type: 'exercise', subType: 'mcq', question: "Which is a major red flag for fake news?", options: [{text: 'The article is boring', correct: false}, {text: 'The headline makes you very angry or afraid', correct: true}, {text: 'The article has a chart', correct: false}], feedback: {correct: "Yes! Fake news often tries to trigger strong emotions to make you stop thinking critically.", incorrect: "Strong emotional manipulation is a classic sign that an article is not trustworthy."} },
+                         { type: 'lesson', title: 'Confirmation Bias', content: "This is our natural tendency to seek out and believe information that confirms what we already think. It's a mental shortcut that can lead us astray.", example: "If you think a politician is bad, you're more likely to believe negative stories about them, even without evidence." },
+                         { type: 'exercise', subType: 'mcq', question: "How do you fight confirmation bias?", options: [{text: 'Only read news that agrees with you', correct: false}, {text: 'Actively seek out sources with different viewpoints', correct: true}, {text: 'Never change your mind', correct: false}], feedback: {correct: "Excellent! Being open to different perspectives is the best way to get a fuller picture and fight bias.", incorrect: "The best way to fight bias is to challenge your own views by looking at different perspectives."} },
+                         { type: 'exercise', subType: 'ab-test', question: "Which headline is more likely to be from a reliable source?", options: [{text: 'Government Report Details Budget Changes', correct: true}, {text: 'THEY DON\'T WANT YOU TO KNOW THIS SECRET ABOUT TAXES!', correct: false}], feedback: {correct: "Exactly. The first headline is neutral and informative, while the second is emotional and conspiratorial.", incorrect: "Reliable news sources tend to use calm, factual headlines."} },
+                         { type: 'exercise', subType: 'mcq', question: "An article says a study was done by 'top scientists' but gives no names or institutions. Why is this a red flag?", options: [{text: 'Top scientists are usually wrong', correct: false}, {text: 'It prevents you from verifying the source', correct: true}, {text: 'It means the information is brand new', correct: false}], feedback: {correct: "That's it. Vague sources are a red flag because they make it impossible to check if the source is real and credible.", incorrect: "Credible reporting will name its sources so you can check them for yourself."} }
+                     ] }
+                 ] 
+             }, 
+             he: { 
+                 welcomeTitle: "ברוכים הבאים לחשיבה ביקורתית!", 
+                 welcomeText: "הקורס האינטראקטיבי והקצר הזה יעזור לכם לבנות חשיבה חדה יותר. למדו לנתח מידע, לזהות כשלים לוגיים, ולהבחין בפייק ניוז.", 
+                 letsGo: "בואו נצמח! 🌱", 
+                 gotIt: "הבנתי!", 
+                 tipFromBot: "💡 מזון למחשבה!", 
+                 mapSpeech: "עבודה יפה! בואו נתמודד עם הנושא הבא.", 
+                 stageSpeech: "בואו נפענח את זה!", 
+                 moduleComplete: "השלב הושלם!", 
+                 outOfTries: "נגמרו הניסיונות!", 
+                 outOfTriesMsg: "זה בסדר! לחשוב זו עבודה קשה. בואו נחזור על השלב הזה שוב מההתחלה.", 
+                 tryAgain: "לנסות שוב", 
+                 continueToMap: "המשך", 
+                 level1Title: "יסודות החשיבה הביקורתית", 
+                 finalTitle: "הקורס הושלם! 🎉", 
+                 finalContent: "כל הכבוד! חיזקתם את כישורי החשיבה הביקורתית שלכם. כעת אתם מצוידים טוב יותר לנווט בעולם המידע. המשיכו לשאול שאלות!", 
+                 finalBot: "אתם הוגים ביקורתיים מוסמכים! 🧠✨", 
+                 waitingList: "רוצים לדעת מתי קורסים חדשים יהיו מוכנים?", 
+                 waitingListCTA: "הצטרפו לרשימת ההמתנה!", 
+                 getNotified: "עדכנו אותי 🚀", 
+                 cookieText: "אנו משתמשים בעוגיות כדי לשפר את חווית המשתמש ולנתח את תעבורת האתר.", 
+                 accept: "אישור", 
+                 decline: "סירוב", 
+                 terms: "תנאי שימוש", 
+                 privacy: "מדיניות פרטיות", 
+                 resetProgress: "אפס התקדמות", 
+                 tips: [
+                    "תמיד שאלו: 'מי מרוויח מזה שאני אאמין בזה?'",
+                    "אם כותרת מכעיסה אתכם, ייתכן שהיא תוכננה כך. קחו נשימה עמוקה לפני שאתם משתפים.",
+                    "חפשו מקורות. אם כתבה לא מציינת מאיפה המידע שלה, היו סקפטיים.",
+                    "קורלציה אינה סיבתיות. רק כי שני דברים קורים באותו זמן, זה לא אומר שאחד גרם לשני."
+                 ], 
+                 modules: [ 
+                     { id: 1, title: "הנחת יסוד", icon: "🧱", screens: [
+                         { type: 'lesson', title: 'מהי הנחת יסוד?', content: "הנחת יסוד היא הבסיס של טיעון. זהו המשפט או העובדה המוצגים כסיבה להאמין למסקנה.", example: "טיעון: 'מעונן בחוץ (הנחת יסוד), אז אולי ירד גשם (מסקנה).'" },
+                         { type: 'exercise', subType: 'mcq', question: "זהו את הנחת היסוד: 'לכל הציפורים יש נוצות. מכיוון שקיכלי הוא ציפור, יש לו נוצות.'", options: [{text: 'קיכלי הוא ציפור', correct: false}, {text: 'לכל הציפורים יש נוצות', correct: true}, {text: 'יש לו נוצות', correct: false}], feedback: {correct: "בדיוק! האמירה הרחבה 'לכל הציפורים יש נוצות' היא הנחת היסוד שעליה בנוי הטיעון.", incorrect: "הנחת היסוד היא הכלל הכללי או העובדה שהטיעון מתחיל איתם."} },
+                         { type: 'lesson', title: 'הנחה חזקה מול חלשה', content: "הנחת יסוד חזקה היא עובדה שניתן לאמת. הנחה חלשה עשויה להיות דעה, הכללת יתר, או משהו שהוא פשוט לא נכון.", example: "חזקה: 'מים הם H₂O.'\nחלשה: 'כל הפוליטיקאים לא ישרים.'" },
+                         { type: 'exercise', subType: 'ab-test', question: "איזו הנחת יסוד חזקה יותר לטיעון?", options: [{text: 'סבא שלי אומר שברוקולי זה בריא.', correct: false}, {text: 'מספר מחקרים מדעיים מראים שלברוקולי יש ויטמינים.', correct: true}], feedback: {correct: "נכון! ראיות מדעיות חזקות הרבה יותר מדעה של אדם אחד.", incorrect: "עובדה ניתנת לאימות ממחקרים היא בסיס חזק יותר מדעה אישית."} },
+                         { type: 'exercise', subType: 'matching', question: "התאם את הטיעון להנחת היסוד שלו.", pairs: [{item1: 'המכונית שלי לא מניעה, אז בטח המצבר התרוקן.', item2: 'המכונית צריכה מצבר תקין כדי להניע.'}, {item1: 'סוקרטס הוא בן תמותה.', item2: 'כל בני האדם הם בני תמותה.'}, {item1: 'הסרט הזה יהיה גרוע.', item2: 'שלושת הסרטים האחרונים של הבמאי היו גרועים.'}], feedback: {correct: "התאמות מעולות! אתם משתפרים בזיהוי הבסיס של טיעונים.", incorrect: "נסו למצוא את משפט הבסיס שעליו בנויה כל מסקנה."} },
+                         { type: 'exercise', subType: 'mcq', question: "הנחת יסוד אינה אמינה אם היא מבוססת על...", options: [{text: 'עובדה מדעית', correct: false}, {text: 'הרגשה או רגש אישי', correct: true}, {text: 'תיעוד היסטורי', correct: false}], feedback: {correct: "נכון! רגשות אינם בסיס מוצק לטיעון כי אי אפשר לאמת אותם.", incorrect: "עובדות ותיעודים ניתנים לבדיקה. רגש אישי אינו הנחת יסוד אמינה."} }
+                     ]}, 
+                     { id: 2, title: "הנחות סמויות", icon: "🤔", screens: [
+                         { type: 'lesson', title: 'זיהוי הנחות סמויות', content: "הנחות סמויות הן האמונות הבלתי נאמרות המחברות בין הנחת היסוד למסקנה. הן החלק ה'נסתר' של הטיעון.", example: "טיעון: 'המכונית הזו יקרה, אז היא בטח מהירה.'\nהנחה סמויה: 'כל המכוניות היקרות הן מהירות.'" },
+                         { type: 'exercise', subType: 'mcq', question: "טיעון: 'היא קוראת הרבה, אז היא בטח חכמה.' מהי ההנחה הסמויה?", options: [{text: 'לקרוא זה כיף', correct: false}, {text: 'אנשים שקוראים הרבה הם חכמים', correct:true}, {text: 'אנשים חכמים קוראים הרבה', correct: false}], feedback: {correct: "מצאתם! הטיעון מניח קשר ישיר בין כמות הקריאה לאינטליגנציה.", incorrect: "ההנחה הסמויה היא הרעיון הלא נאמר שגורם למסקנה להיראות כנובעת מהנחת היסוד."} },
+                         { type: 'lesson', title: 'הנחות סמויות בחדשות', content: "כותרות חדשותיות מסתמכות לעתים קרובות על הנחות סמויות כדי למשוך את תשומת הלב שלכם. ללמוד לראות אותן זה המפתח לא להיות מוטעים.", example: "כותרת: 'המילניאלס הורסים את תעשיית המפיות!'\nהנחה סמויה: 'תעשיית המפיות אכן נכשלת והמילניאלס הם הגורם היחיד.'" },
+                         { type: 'exercise', subType: 'ab-test', question: "לאיזו כותרת יש הנחה סמויה גדולה יותר?", options: [{text: 'מחקר חדש מצא קשר בין סוכר לעששת', correct: false}, {text: 'טריק אחד מוזר שיהפוך אתכם למליונרים!', correct: true}], feedback: {correct: "בדיוק! השנייה מניחה שטריק אחד ופשוט יכול להפוך כל אחד לעשיר, וזו קפיצה ענקית ולא מוכחת.", incorrect: "הכותרת על 'טריק מוזר' עושה הנחה הרבה יותר גדולה ופחות אמינה."} },
+                         { type: 'exercise', subType: 'mcq', question: "טיעון: 'העובד החדש מאוד שקט. הוא בטח לא ידידותי.' מהי ההנחה הסמויה?", options: [{text: 'עובדים חדשים תמיד שקטים', correct: false}, {text: 'אנשים שקטים אינם ידידותיים', correct: true}, {text: 'אנשים לא ידידותיים הם שקטים', correct: false}], feedback: {correct: "נכון! הטיעון מניח באופן לא הוגן שלהיות שקט הוא סימן לחוסר ידידותיות.", incorrect: "ההנחה הסמויה היא הגשר בין 'שקט' ל'לא ידידותי'."} },
+                         { type: 'exercise', subType: 'ab-test', question: "איזה משפט מסתמך פחות על הנחות סמויות?", options: [{text: 'הוא מרכיב משקפיים, אז הוא בטח גאון.', correct: false}, {text: 'היא סיימה מרתון, אז היא בטח עייפה.', correct: true}], feedback: {correct: "נכון. זו הנחה הרבה יותר סבירה שריצת מרתון גורמת לעייפות מאשר שמשקפיים הם סימן לגאונות.", incorrect: "חשבו איזו מסקנה סבירה יותר להיות נכונה בהתבסס על הנחת היסוד."} }
+                     ]}, 
+                     { id: 3, title: "ראיות", icon: "🔎", screens: [
+                         { type: 'lesson', title: "עובדה מול דעה", content: "עובדה ניתנת להוכחה כאמיתית או שקרית. דעה היא אמונה או שיפוט שלא ניתן להוכיח.", example: "עובדה: 'כדור הארץ עגול.'\nדעה: 'כדור הארץ יפהפה.'" },
+                         { type: 'exercise', subType: 'ab-test', question: "איזה משפט הוא עובדה?", options: [{text: 'סרטי קומדיה הם הסוג הטוב ביותר של סרטים.', correct: false}, {text: 'הסרט "טיטאניק" יצא לאקרנים בשנת 1997.', correct: true}], feedback: {correct: "נכון! ניתן להוכיח את תאריך היציאה. איזה סרט הוא 'הטוב ביותר' זו דעה.", incorrect: "זכרו, עובדה היא משהו שאפשר לבדוק ולאמת. דעה היא מה שמישהו מאמין."} },
+                         { type: 'lesson', title: 'המקור חשוב', content: "תמיד שאלו: מי מספק את המידע הזה? האם הם מומחים? האם יש להם סיבה להיות מוטים?", example: "מחקר על ההשפעות הבריאותיות של משקאות מוגזים אמין יותר אם הוא מאוניברסיטה, ולא מחברת המשקאות עצמה." },
+                         { type: 'exercise', subType: 'mcq', question: "מיהו המקור האמין ביותר למידע על שינויי אקלים?", options: [{text: 'ידוען פופולרי', correct: false}, {text: 'ארגון מדעי גדול', correct: true}, {text: 'פורום אינטרנטי אנונימי', correct: false}], feedback: {correct: "נכון! לארגון מדעי יש את המומחיות והאחריות הגדולות ביותר.", incorrect: "המקור האמין ביותר הוא זה עם המומחיות הרלוונטית ביותר והכי פחות הטיה."} },
+                         { type: 'exercise', subType: 'matching', question: "התאם את הטענה לסוג הראיה.", pairs: [{item1: 'חבר שלי הרגיש יותר טוב אחרי שלקח את הכדור הזה.', item2: 'אנקדוטלית'}, {item1: '9 מתוך 10 רופאי שיניים מסכימים.', item2: 'סטטיסטית'}, {item1: 'במדריך למשתמש כתוב שזה כפתור ההפעלה.', item2: 'עדותית'}], feedback: {correct: "עבודה מצוינת! אתם מבחינים בין סוגים שונים של ראיות.", incorrect: "חשבו האם הראיה היא סיפור, מספר, או הצהרה רשמית."} },
+                         { type: 'exercise', subType: 'mcq', question: "קראתם טענה בריאותית מפתיעה באינטרנט. מה הצעד הראשון הנכון?", options: [{text: 'לשתף אותה מייד', correct: false}, {text: 'לחפש את המקור המקורי של הטענה', correct: true}, {text: 'להניח שהיא נכונה', correct: false}], feedback: {correct: "מושלם! תמיד נסו לעקוב אחר מידע בחזרה למקור שלו לפני שאתם סומכים עליו או משתפים אותו.", incorrect: "לפני שמאמינים או משתפים, המהלך הטוב ביותר הוא לבדוק מאיפה המידע מגיע."} }
+                     ]}, 
+                     { id: 4, title: "פייק ניוז", icon: "📰", screens: [
+                         { type: 'lesson', title: 'סימנים לפייק ניוז', content: "חפשו דגלים אדומים: כותרות מזעזעות או רגשיות, אין שם מחבר, אין מקורות, ושגיאות כתיב/דקדוק. חדשות אמיתיות בדרך כלל רגועות ומקצועיות.", example: "פייק: 'שוקינג: רופאים שונאים את הפרי הזה!'\nאמיתי: 'מחקר חדש בוחן את השפעת פרי על הבריאות.'" },
+                         { type: 'exercise', subType: 'mcq', question: "מהו דגל אדום מרכזי לפייק ניוז?", options: [{text: 'הכתבה משעממת', correct: false}, {text: 'הכותרת גורמת לכם לכעוס או לפחד מאוד', correct: true}, {text: 'לכתבה יש תרשים', correct: false}], feedback: {correct: "כן! פייק ניוז מנסה לעתים קרובות לעורר רגשות עזים כדי לגרום לכם להפסיק לחשוב בצורה ביקורתית.", incorrect: "מניפולציה רגשית חזקה היא סימן קלאסי לכך שכתבה אינה אמינה."} },
+                         { type: 'lesson', title: 'הטיית אישור', content: "זוהי הנטייה הטבעית שלנו לחפש ולהאמין למידע המאשר את מה שאנחנו כבר חושבים. זהו קיצור דרך מנטלי שיכול להטעות אותנו.", example: "אם אתם חושבים שפוליטיקאי הוא רע, סביר יותר שתאמינו לסיפורים שליליים עליו, גם ללא ראיות." },
+                         { type: 'exercise', subType: 'mcq', question: "איך נלחמים בהטיית אישור?", options: [{text: 'לקרוא רק חדשות שמסכימות איתך', correct: false}, {text: 'לחפש באופן פעיל מקורות עם נקודות מבט שונות', correct: true}, {text: 'לעולם לא לשנות את דעתך', correct: false}], feedback: {correct: "מצוין! להיות פתוח לנקודות מבט שונות זו הדרך הטובה ביותר לקבל תמונה מלאה יותר ולהילחם בהטיה.", incorrect: "הדרך הטובה ביותר להילחם בהטיה היא לאתגר את הדעות שלכם על ידי בחינת נקודות מבט שונות."} },
+                         { type: 'exercise', subType: 'ab-test', question: "איזו כותרת סביר יותר שתגיע ממקור חדשותי אמין?", options: [{text: 'דוח ממשלתי מפרט שינויים בתקציב', correct: true}, {text: 'הם לא רוצים שתדעו את הסוד הזה על מיסים!', correct: false}], feedback: {correct: "בדיוק. הכותרת הראשונה ניטרלית ואינפורמטיבית, בעוד שהשנייה רגשית וקונספירטיבית.", incorrect: "מקורות חדשות אמינים נוטים להשתמש בכותרות רגועות ועובדתיות."} },
+                         { type: 'exercise', subType: 'mcq', question: "כתבה טוענת שמחקר בוצע על ידי 'מדענים בכירים' אך לא מציינת שמות או מוסדות. מדוע זה דגל אדום?", options: [{text: 'מדענים בכירים בדרך כלל טועים', correct: false}, {text: 'זה מונע מכם לאמת את המקור', correct: true}, {text: 'זה אומר שהמידע חדש לגמרי', correct: false}], feedback: {correct: "זהו זה. מקורות מעורפלים הם דגל אדום כי הם הופכים את אימות המקור לאמין וקיים לבלתי אפשרי.", incorrect: "דיווח אמין יציין את המקורות שלו כדי שתוכלו לבדוק אותם בעצמכם."} }
+                     ] }
+                 ]
+             } 
+         }; 
+
+         function saveData() { localStorage.setItem('criticalThinkingProgress', JSON.stringify(state)); } 
+         function loadData() { 
+             const savedData = localStorage.getItem('criticalThinkingProgress'); 
+             state = savedData ? { ...defaultState, ...JSON.parse(savedData) } : { ...defaultState }; 
+         } 
+         function createButton(text, onClick, extraClass = '') { const btn = document.createElement('button'); btn.innerHTML = text; btn.className = `btn ${extraClass}`; btn.onclick = onClick; return btn; } 
+          
+         function updateUI() {  
+             const t = courseData[state.lang]; 
+             const totalModules = t.modules.filter(m=>m.screens.length > 0).length; 
+             let progressPercentage = totalModules > 0 ? (state.completedModules.length / totalModules) * 100 : 0; 
+              
+             livesDisplay.style.display = 'none'; 
+              
+             if (state.view === 'stage') { 
+                 const module = t.modules.find(s => s.id === state.activeModule.id); 
+                 progressPercentage = module.screens.length > 0 ? (state.activeModule.screen / module.screens.length) * 100 : 0; 
+                 livesDisplay.innerHTML = `�`.repeat(state.activeModule.lives); 
+                 livesDisplay.style.display = 'block'; 
+             } 
+              
+             progressBar.style.width = `${progressPercentage}%`; 
+             xpDisplay.innerHTML = `💎 ${state.xp} XP`;  
+             soundToggle.textContent = state.isMuted ? '🔇' : '🔊'; 
+             themeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙'; 
+             document.body.classList.toggle('rtl', state.lang === 'he');
+             
+             // Update Brain Avatar
+             let brainStage = state.completedModules.length;
+             if (state.view === 'final') {
+                 brainStage = brainSVGs.length - 1;
+             }
+             if (brainStage >= brainSVGs.length) brainStage = brainSVGs.length - 1;
+             brainAvatarContainer.innerHTML = brainSVGs[brainStage];
+         } 
+
+         function render() { 
+             updateUI(); 
+             contentArea.innerHTML = ''; 
+             const view = state.view; 
+             if (view === 'map') renderMapView(); 
+             else if (view === 'stage') renderModuleView(); 
+             else if (view === 'moduleComplete') renderModuleCompleteScreen(); 
+             else if (view === 'moduleFailed') renderModuleFailedScreen(); 
+             else if (view === 'final') renderFinalScreen(); 
+         } 
+
+         function showTip() { 
+             const t = courseData[state.lang]; 
+             if (Math.random() < 0.25) { 
+                 const randomTip = t.tips[Math.floor(Math.random() * t.tips.length)]; 
+                 tipTitle.textContent = t.tipFromBot; 
+                 tipText.textContent = randomTip; 
+                 closeTipBtn.textContent = t.gotIt; 
+                 tipModalOverlay.style.display = 'flex'; 
+             } 
+         } 
+
+         function renderMapView() { 
+             const t = courseData[state.lang]; 
+             const mapView = document.createElement('div'); 
+             mapView.className = 'map-view'; 
+             mapView.innerHTML = `<h2 class="level-title">${t.level1Title}</h2>`; 
+             t.modules.forEach(module => { 
+                 if (!module.screens || module.screens.length === 0) return; 
+                 const node = document.createElement('div'); 
+                 node.className = 'stage-node'; 
+                 const isCompleted = state.completedModules.includes(module.id); 
+                 const isUnlocked = state.completedModules.length + 1 === module.id; 
+                 const isLocked = !isCompleted && !isUnlocked; 
+                 const button = document.createElement('button'); 
+                 button.className = 'stage-button'; 
+                 if(isCompleted) button.classList.add('completed'); 
+                 if(isUnlocked) button.classList.add('unlocked'); 
+                 if(isLocked) button.classList.add('locked'); 
+                 button.disabled = isLocked; 
+                 button.innerHTML = `<div class="stage-icon">${isCompleted ? '⭐' : module.icon}</div><div class="stage-title-map">${module.title}</div>`; 
+                 button.onclick = () => {  
+                     gtag('event', 'module_start', { 'module_id': module.id, 'module_title': module.title }); 
+                     state.view = 'stage';  
+                     state.activeModule = { id: module.id, screen: 0, lives: 3 };  
+                     render();  
+                 }; 
+                 if (isUnlocked) { 
+                     const brainIcon = document.createElement('div'); 
+                     brainIcon.className = 'brain-map-icon';
+                     let brainStage = state.completedModules.length;
+                     if (brainStage >= brainSVGs.length) brainStage = brainSVGs.length - 1;
+                     brainIcon.innerHTML = brainSVGs[brainStage];
+                     node.appendChild(brainIcon); 
+                 } 
+                 node.appendChild(button); 
+                 mapView.appendChild(node); 
+             }); 
+             contentArea.appendChild(mapView); 
+             brainSpeech.textContent = t.mapSpeech; 
+         } 
+
+         function renderModuleView() { 
+             const t = courseData[state.lang]; 
+             const module = t.modules.find(s => s.id === state.activeModule.id); 
+             if (!module) return; 
+             const screenData = module.screens[state.activeModule.screen]; 
+             const title = document.createElement('h1'); 
+             title.className = 'screen-title'; 
+             title.textContent = screenData.title; 
+             contentArea.appendChild(title); 
+             brainSpeech.textContent = t.stageSpeech; 
+             if (screenData.type === 'lesson') { 
+                 const content = document.createElement('p'); content.className = 'lesson-content'; content.innerHTML = screenData.content; contentArea.appendChild(content); 
+                 if (screenData.example) { const example = document.createElement('div'); example.className = 'lesson-example'; example.innerHTML = screenData.example; contentArea.appendChild(example); } 
+                 const nextButton = createButton(t.continueToMap, () => advanceScreen(), 'btn-primary'); 
+                 contentArea.appendChild(nextButton); 
+             } else if (screenData.type === 'exercise') { 
+                 renderExerciseScreen(screenData); 
+             } 
+         } 
+          
+         function advanceScreen() { 
+             const t = courseData[state.lang]; 
+             const module = t.modules.find(s => s.id === state.activeModule.id); 
+             if (state.activeModule.screen < module.screens.length - 1) { 
+                 state.activeModule.screen++; render(); 
+             } else { 
+                 state.view = 'moduleComplete'; 
+                 render(); 
+             } 
+         } 
+          
+         function completeModule() { 
+             if (!state.completedModules.includes(state.activeModule.id)) { 
+                 state.completedModules.push(state.activeModule.id); 
+             } 
+             gtag('event', 'module_complete', { 'module_id': state.activeModule.id }); 
+
+             const totalModules = courseData[state.lang].modules.filter(m=>m.screens.length > 0).length; 
+             if (state.completedModules.length === totalModules) { 
+                 state.view = 'final'; 
+                 gtag('event', 'level_complete', { 'level_id': 1 }); 
+             } else { 
+                 state.view = 'map'; 
+                 showTip(); 
+             } 
+             saveData(); 
+             render(); 
+         } 
+
+         function handleAnswer(button, isCorrect, data) { 
+             const t = courseData[state.lang]; 
+             contentArea.querySelectorAll('button').forEach(b => b.disabled = true); 
+             const feedbackSection = document.createElement('div'); 
+             const nextButtonContainer = document.createElement('div'); 
+             feedbackSection.id = 'feedback-section'; 
+             feedbackSection.innerHTML = `<div class="feedback-message"></div>`; 
+             nextButtonContainer.id = 'next-button-container'; 
+             feedbackSection.appendChild(nextButtonContainer); 
+             const feedbackMessage = feedbackSection.querySelector('.feedback-message'); 
+              
+             if (isCorrect) { 
+                 playSound('correct'); 
+                 state.xp += 10; 
+                 state.streak++; 
+                 button.classList.add('correct'); 
+                 feedbackMessage.innerHTML = data.feedback.correct; 
+                 feedbackMessage.className = 'feedback-message correct'; 
+                 if (state.streak >= 6) { brainSpeech.textContent = "Genius! 🏆"; playSound('streak'); } 
+                 else if (state.streak >= 3) { brainSpeech.textContent = "On a roll! 🔥"; playSound('streak'); } 
+                 else { brainSpeech.textContent = t.gotIt; } 
+                 const nextButton = createButton('Continue', () => advanceScreen(), 'btn-primary'); 
+                 nextButtonContainer.appendChild(nextButton); 
+             } else { 
+                 playSound('incorrect'); 
+                 gtag('event', 'answer_incorrect', { 'module_id': state.activeModule.id, 'question': data.question }); 
+                 state.streak = 0; 
+                 state.activeModule.lives--; 
+                 button.classList.add('incorrect'); 
+                 feedbackMessage.innerHTML = data.feedback.incorrect; 
+                 feedbackMessage.className = 'feedback-message incorrect'; 
+                 brainSpeech.textContent = "That's okay, let's think it through."; 
+
+                 if (state.activeModule.lives <= 0) { 
+                     state.view = 'moduleFailed'; 
+                     setTimeout(render, 1500); 
+                 } else { 
+                     const retryButton = createButton(t.tryAgain, () => render()); 
+                     nextButtonContainer.appendChild(retryButton); 
+                 } 
+             } 
+             contentArea.appendChild(feedbackSection); 
+             saveData(); 
+             updateUI(); 
+         } 
+          
+         function renderFinalScreen() { 
+             const t = courseData[state.lang]; 
+             contentArea.innerHTML = ''; 
+             const title = document.createElement('h1'); 
+             title.className = 'completion-title'; 
+             title.textContent = t.finalTitle; 
+             contentArea.appendChild(title); 
+             const content = document.createElement('p'); 
+             content.className = 'lesson-content'; 
+             content.textContent = t.finalContent; 
+             contentArea.appendChild(content); 
+              
+             for(let i=0; i<100; i++) { const c = document.createElement('div'); c.className='confetti'; c.style.left=Math.random()*100+'vw'; c.style.animationDuration=Math.random()*2+3+'s'; c.style.backgroundColor=`hsl(${Math.random()*360},100%,50%)`; document.body.appendChild(c); setTimeout(() => { c.remove() }, 5000); } 
+
+             const formContainer = document.createElement('div'); 
+             formContainer.className = 'waiting-list-container'; 
+             formContainer.innerHTML = `<p>${t.waitingList}</p><h3>${t.waitingListCTA}</h3>`; 
+             const linkButton = createButton(t.getNotified, () => window.open('https://forms.gle/KpiK7oC4V5Dg1gvGA', '_blank'), 'btn-primary'); 
+             formContainer.appendChild(linkButton); 
+             contentArea.appendChild(formContainer); 
+             brainSpeech.textContent = t.finalBot;
+             updateUI();
+         } 
+
+         function renderModuleCompleteScreen() { 
+             playSound('moduleComplete'); 
+             const t = courseData[state.lang]; 
+             contentArea.innerHTML = ''; 
+             const icon = document.createElement('div'); 
+             icon.className = 'completion-icon'; 
+             icon.textContent = '🎉'; 
+             contentArea.appendChild(icon); 
+             const title = document.createElement('h2'); 
+             title.className = 'completion-title'; 
+             title.textContent = t.moduleComplete; 
+             contentArea.appendChild(title); 
+             const continueButton = createButton(t.continueToMap, () => completeModule(), 'btn-primary'); 
+             contentArea.appendChild(continueButton); 
+
+             const resetButton = document.createElement('button'); 
+             resetButton.id = 'reset-progress-btn'; 
+             resetButton.textContent = t.resetProgress; 
+             resetButton.onclick = () => { 
+                 if(confirm("Are you sure you want to reset all your progress?")) { 
+                     localStorage.removeItem('criticalThinkingProgress'); 
+                     localStorage.removeItem('criticalThinkingWelcomed'); 
+                     localStorage.removeItem('cookieConsent'); 
+                     location.reload(); 
+                 } 
+             }; 
+             contentArea.appendChild(resetButton); 
+         } 
+
+         function renderModuleFailedScreen() { 
+             const t = courseData[state.lang]; 
+             contentArea.innerHTML = ''; 
+             const icon = document.createElement('div'); 
+             icon.className = 'completion-icon'; 
+             icon.textContent = '💔'; 
+             contentArea.appendChild(icon); 
+             const title = document.createElement('h2'); 
+             title.className = 'completion-title'; 
+             title.textContent = t.outOfTries; 
+             contentArea.appendChild(title); 
+             const content = document.createElement('p'); 
+             content.className = 'lesson-content'; 
+             content.textContent = t.outOfTriesMsg; 
+             contentArea.appendChild(content); 
+             const retryButton = createButton(t.tryAgain, () => { 
+                 state.view = 'map'; render(); 
+             }, 'btn-primary'); 
+             contentArea.appendChild(retryButton); 
+         } 
+
+         function renderExerciseScreen(data) { 
+             const question = document.createElement('p'); question.className = 'exercise-question'; question.innerHTML = data.question; contentArea.appendChild(question); 
+             const choiceContainer = document.createElement('div'); 
+             switch(data.subType) { 
+                 case 'mcq': case 'ab-test': 
+                     choiceContainer.className = 'choice-grid'; 
+                     data.options.forEach(option => {  
+                         const btn = createButton(option.text, () => handleAnswer(btn, option.correct, data)); 
+                         choiceContainer.appendChild(btn); 
+                      }); 
+                     break; 
+                 case 'matching': 
+                      choiceContainer.className = 'matching-grid'; 
+                      renderMatchingExercise(choiceContainer, data); 
+                      break; 
+             } 
+             contentArea.appendChild(choiceContainer); 
+         } 
+
+         function renderMatchingExercise(container, data) { 
+             const {left, right} = {left: [], right: []}; 
+             [...data.pairs].sort(() => Math.random() - 0.5).forEach(p => { left.push(p.item1); right.push(p.item2); }); 
+             right.sort(() => Math.random() - 0.5); 
+
+             const leftCol = document.createElement('div'); 
+             const rightCol = document.createElement('div'); 
+             [leftCol, rightCol].forEach(c => { c.style.display = 'flex'; c.style.flexDirection = 'column'; c.style.gap = '0.5rem'; }); 
+              
+             let selected = { left: null, right: null }; 
+             let correctPairs = 0; 
+
+             const checkMatch = () => { 
+                 if (!selected.left || !selected.right) return; 
+                  
+                 const clickedLeft = selected.left; 
+                 const clickedRight = selected.right; 
+                  
+                 const originalPair = data.pairs.find(p => p.item1 === clickedLeft.textContent); 
+                 if (originalPair && originalPair.item2 === clickedRight.textContent) { 
+                     playSound('correct'); 
+                     [clickedLeft, clickedRight].forEach(el => { 
+                         if(el) { 
+                            el.classList.remove('selected'); 
+                            el.classList.add('correct');  
+                            el.disabled = true; 
+                         } 
+                     }); 
+                     correctPairs++; 
+                     if (correctPairs === data.pairs.length) { 
+                          setTimeout(() => handleAnswer(container, true, data), 300); 
+                     } 
+                 } else { 
+                     playSound('incorrect'); 
+                     [clickedLeft, clickedRight].forEach(el => { if(el) el.classList.add('incorrect') }); 
+                     setTimeout(() => { 
+                         [clickedLeft, clickedRight].forEach(el => { if(el) el.classList.remove('incorrect') }); 
+                     }, 800); 
+                 } 
+                 if(clickedLeft) clickedLeft.classList.remove('selected'); 
+                 if(clickedRight) clickedRight.classList.remove('selected'); 
+                 selected = { left: null, right: null }; 
+             }; 
+             left.forEach(text => { const btn = createButton(text, ()=>{ if(selected.left){return;} leftCol.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected')); btn.classList.add('selected'); selected.left=btn; checkMatch(); }, 'matching-pair'); leftCol.appendChild(btn); }); 
+             right.forEach(text => { const btn = createButton(text, ()=>{ if(selected.right){return;} rightCol.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected')); btn.classList.add('selected'); selected.right=btn; checkMatch(); }, 'matching-pair'); rightCol.appendChild(btn); }); 
+             container.appendChild(leftCol); 
+             container.appendChild(rightCol); 
+         } 
+          
+         function setLanguage(lang) { 
+             state.lang = lang; 
+             document.documentElement.lang = lang; 
+             updateWelcomeModalText(); 
+             saveData(); 
+         } 
+
+         function setTheme(theme) { 
+             state.theme = theme; 
+             document.body.classList.toggle('dark-mode', theme === 'dark'); 
+             saveData(); 
+             updateUI(); 
+         } 
+          
+         function updateWelcomeModalText() { 
+             const t = courseData[state.lang]; 
+             welcomeTitle.textContent = t.welcomeTitle; 
+             welcomeText.textContent = t.welcomeText; 
+             startCourseBtn.innerHTML = t.letsGo; 
+             modalLangEnBtn.classList.toggle('active', state.lang === 'en'); 
+             modalLangHeBtn.classList.toggle('active', state.lang === 'he'); 
+             document.body.classList.toggle('rtl', state.lang === 'he'); 
+         } 
+
+         function showPolicy(type) { 
+             const t = courseData[state.lang]; 
+             const contactEmail = '10mvpsin20days@gmail.com'; 
+             policyTitle.textContent = t[type]; 
+             let policyContent = `<p>Last updated: June 12, 2024</p><p>Welcome. These are placeholder policies. For any questions, please contact us at <a href="mailto:${contactEmail}">${contactEmail}</a>.</p>`; 
+             if (type === 'privacy') { 
+                 policyContent += `<p>We use Google Analytics to collect anonymous data about website usage to improve our service. You can opt out via the cookie consent banner. We do not sell or share your data.</p>`; 
+             } else { 
+                 policyContent += `<p>By using this service, you agree to use it for educational purposes only. You agree not to reproduce or distribute the content without permission.</p>`; 
+             } 
+             policyText.innerHTML = policyContent; 
+             policyModalOverlay.style.display = 'flex'; 
+         } 
+          
+         function init() { 
+             loadData(); 
+             setTheme(state.theme);  
+
+             const userLang = navigator.language || navigator.userLanguage;  
+             if (userLang.startsWith('he') && !localStorage.getItem('langSelected')) { 
+                 state.lang = 'he'; 
+             } 
+
+             if (!localStorage.getItem('criticalThinkingWelcomed')) { 
+                 updateWelcomeModalText(); 
+                 welcomeModalOverlay.style.display = 'flex'; 
+             } else { 
+                 render(); 
+             } 
+
+             const cookieConsent = localStorage.getItem('cookieConsent'); 
+             if (cookieConsent === 'true') { 
+                 gtag('config', 'G-L8Q143JV5X'); 
+             } else if (!cookieConsent) { 
+                 const t = courseData[state.lang]; 
+                 cookieText.textContent = t.cookieText; 
+                 acceptCookiesBtn.textContent = t.accept; 
+                 declineCookiesBtn.textContent = t.decline; 
+                 cookieBanner.style.display = 'flex'; 
+             } 
+              
+             startCourseBtn.addEventListener('click', () => { 
+                 welcomeModalOverlay.style.display = 'none'; 
+                 localStorage.setItem('criticalThinkingWelcomed', 'true'); 
+                 localStorage.setItem('langSelected', 'true'); 
+                 render(); 
+             }); 
+             const firstInteraction = () => { initAudio(); document.body.removeEventListener('click', firstInteraction); document.body.removeEventListener('touchstart', firstInteraction); }; 
+             document.body.addEventListener('click', firstInteraction); 
+             document.body.addEventListener('touchstart', firstInteraction); 
+             soundToggle.addEventListener('click', () => { initAudio(); state.isMuted = !state.isMuted; updateUI(); saveData(); }); 
+             themeToggle.addEventListener('click', () => setTheme(state.theme === 'light' ? 'dark' : 'light')); 
+             closeTipBtn.addEventListener('click', () => { tipModalOverlay.style.display = 'none'; }); 
+             modalLangEnBtn.addEventListener('click', () => setLanguage('en')); 
+             modalLangHeBtn.addEventListener('click', () => setLanguage('he')); 
+              
+             acceptCookiesBtn.addEventListener('click', () => { 
+                 localStorage.setItem('cookieConsent', 'true'); 
+                 cookieBanner.style.display = 'none'; 
+                 gtag('config', 'G-L8Q143JV5X'); 
+             }); 
+             declineCookiesBtn.addEventListener('click', () => { 
+                 localStorage.setItem('cookieConsent', 'false'); 
+                 cookieBanner.style.display = 'none'; 
+             }); 
+             termsLink.addEventListener('click', (e) => { e.preventDefault(); showPolicy('terms'); }); 
+             privacyLink.addEventListener('click', (e) => { e.preventDefault(); showPolicy('privacy'); }); 
+             closePolicyBtn.addEventListener('click', () => { policyModalOverlay.style.display = 'none'; }); 
+
+             const t = courseData[state.lang]; 
+             termsLink.textContent = t.terms; 
+             privacyLink.textContent = t.privacy; 
+         } 
+          
+         init(); 
+     </script> 
+ </body> 
+ </html>
+�
