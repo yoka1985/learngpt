@@ -6,6 +6,16 @@
     <title>CogniClash - Brain Training Game</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PG4KH356Z5"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-PG4KH356Z5');
+    </script>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -58,31 +68,42 @@
             from { opacity: 1; transform: translateY(0); }
             to { opacity: 0; transform: translateY(-20px); }
         }
-        .number-btn {
+        .number-btn, .face-btn, .item-btn {
             transition: background-color 0.2s, transform 0.2s;
         }
-        .number-btn:hover {
+        .number-btn:hover, .face-btn:hover, .item-btn:hover {
             background-color: #3b82f6;
         }
         .number-btn.selected {
             background-color: #22c55e; /* green-500 */
             transform: scale(0.9);
         }
-        .number-btn:disabled {
+        .number-btn:disabled, .face-btn:disabled, .item-btn:disabled {
             opacity: 0.7;
             cursor: not-allowed;
+        }
+        .face-btn.correct, .item-btn.correct { background-color: #22c55e; }
+        .face-btn.incorrect, .item-btn.incorrect { background-color: #ef4444; }
+        .modal {
+            transition: opacity 0.3s ease;
+        }
+        #current-sum.over {
+            color: #ef4444; /* red-500 */
         }
     </style>
 </head>
 <body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
 
-    <div id="app" class="w-full max-w-md mx-auto p-4">
+    <div id="app" class="w-full max-w-md mx-auto p-4 flex flex-col min-h-screen justify-center">
         
         <!-- Start Screen -->
         <div id="start-screen" class="text-center">
             <h1 class="text-5xl font-bold text-blue-400 mb-4">CogniClash</h1>
             <p class="text-lg text-gray-300 mb-8">Sharpen your mind in a duel against yourself!</p>
             <button id="start-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300 btn-glow">Start Challenge</button>
+            <footer class="mt-auto pt-8 text-gray-500 text-sm">
+                <a href="#" id="toc-link" class="underline">Terms of Use</a> | <a href="#" id="privacy-link" class="underline">Privacy Policy</a>
+            </footer>
         </div>
 
         <!-- Game Screen -->
@@ -91,8 +112,17 @@
                 <div>
                     <span class="text-lg">Score: <span id="score">0</span></span>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-4">
                     <span class="text-lg">Level: <span id="level-display">1</span></span>
+                    <button id="sound-toggle-btn" class="text-white">
+                        <svg id="sound-on-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                        </svg>
+                        <svg id="sound-off-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                        </svg>
+                    </button>
                 </div>
             </div>
             
@@ -111,11 +141,27 @@
         <!-- End Screen -->
         <div id="end-screen" class="hidden text-center">
             <h1 class="text-4xl font-bold text-blue-400 mb-4">Challenge Complete!</h1>
+            <p id="new-high-score-msg" class="text-xl text-yellow-400 font-bold mb-4 hidden">🎉 New Personal Best! 🎉</p>
             <p class="text-2xl mb-2">Final Score: <span id="final-score" class="font-bold"></span></p>
+            <p class="text-lg mb-2">Personal Best: <span id="high-score" class="font-bold"></span></p>
             <p class="text-xl text-gray-400 mb-6">You reached Level <span id="final-level" class="font-bold"></span>!</p>
-            <button id="restart-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300 btn-glow">Play Again</button>
+            <button id="restart-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300 btn-glow mb-4">Play Again</button>
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSd-XdEdVbZw3DA-oq3MXUq-EYTAvFIFri4UGApuQgzj84htig/viewform?usp=dialog" target="_blank" class="w-full block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300 btn-glow">Leave Feedback</a>
+            <footer class="mt-auto pt-8 text-gray-500 text-sm">
+                 <a href="#" id="toc-link-end" class="underline">Terms of Use</a> | <a href="#" id="privacy-link-end" class="underline">Privacy Policy</a>
+            </footer>
         </div>
     </div>
+    
+    <!-- Modal -->
+    <div id="info-modal" class="modal fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden opacity-0">
+        <div class="bg-gray-800 rounded-lg p-6 w-full max-w-sm text-center">
+            <h3 id="modal-title" class="text-2xl font-bold mb-4"></h3>
+            <p id="modal-text" class="text-gray-300 mb-6"></p>
+            <button id="modal-close-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg">Close</button>
+        </div>
+    </div>
+
 
     <script type="module">
         // --- DOM Elements ---
@@ -128,12 +174,21 @@
         const levelDisplay = document.getElementById('level-display');
         const finalScoreDisplay = document.getElementById('final-score');
         const finalLevelDisplay = document.getElementById('final-level');
+        const highScoreDisplay = document.getElementById('high-score');
+        const newHighScoreMsg = document.getElementById('new-high-score-msg');
         const gameTitle = document.getElementById('game-title');
         const gameInstruction = document.getElementById('game-instruction');
         const gameArea = document.getElementById('game-area');
         const timerBar = document.getElementById('timer-bar');
         const levelIndicatorsContainer = document.getElementById('level-indicators');
         const feedbackContainer = document.getElementById('feedback-container');
+        const infoModal = document.getElementById('info-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalText = document.getElementById('modal-text');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const soundToggleBtn = document.getElementById('sound-toggle-btn');
+        const soundOnIcon = document.getElementById('sound-on-icon');
+        const soundOffIcon = document.getElementById('sound-off-icon');
 
         // --- Game State ---
         let score = 0;
@@ -141,6 +196,31 @@
         const maxLevel = 5;
         let timerInterval;
         let gameInProgress = false;
+
+        // --- Sound State & Setup ---
+        let soundEnabled = true;
+        let synths = {};
+
+        function setupSounds() {
+            synths.correct = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            synths.incorrect = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.1 } }).toDestination();
+            synths.flip = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 } }).toDestination();
+            synths.levelUp = new Tone.PolySynth(Tone.Synth).toDestination();
+            synths.click = new Tone.MembraneSynth().toDestination();
+        }
+
+        function playSound(type) {
+            if (!soundEnabled || !synths.correct) return;
+            try {
+                if (type === 'correct') synths.correct.triggerAttackRelease("C5", "8n");
+                if (type === 'incorrect') synths.incorrect.triggerAttackRelease("G2", "8n");
+                if (type === 'flip') synths.flip.triggerAttackRelease("C4", "16n");
+                if (type === 'levelUp') synths.levelUp.triggerAttackRelease(["C4", "E4", "G4", "C5"], "8n");
+                if (type === 'click') synths.click.triggerAttackRelease("C1", "8n");
+            } catch (e) {
+                console.error("Sound play failed:", e);
+            }
+        }
 
         const levelCriteria = {
             1: { score: 500, time: 45 },
@@ -150,19 +230,61 @@
             5: { score: 4500, time: 25 }
         };
         
-        // --- Updated: Replaced Quick Calc with Number Sum ---
         const games = [
-            { name: "Memory Matrix", instruction: "Memorize the pattern, then click the correct tiles.", init: initMemoryMatrix },
+            { name: "Face Recall", instruction: "Memorize the faces, then find them in the grid.", init: initFaceRecall },
             { name: "Emoji Match", instruction: "Memorize the emojis, then match the pairs.", init: initEmojiMatch },
-            { name: "Number Sum", instruction: "Select numbers that add up to the target.", init: initNumberSum }
+            { name: "Memory Matrix", instruction: "Memorize the pattern, then click the correct tiles.", init: initMemoryMatrix },
+            { name: "Number Sum", instruction: "Select numbers that add up to the target.", init: initNumberSum },
+            { name: "Item Recall", instruction: "Memorize the items, then find them in the grid.", init: initItemRecall }
         ];
 
         // --- Event Listeners ---
         startBtn.addEventListener('click', startGame);
         restartBtn.addEventListener('click', startGame);
 
+        soundToggleBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundOnIcon.classList.toggle('hidden');
+            soundOffIcon.classList.toggle('hidden');
+            playSound('click');
+        });
+
+        // --- Modal & Footer Links ---
+        function showModal(title, text) {
+            modalTitle.textContent = title;
+            modalText.textContent = text;
+            infoModal.classList.remove('hidden');
+            setTimeout(() => infoModal.classList.remove('opacity-0'), 10);
+        }
+
+        modalCloseBtn.addEventListener('click', () => {
+            infoModal.classList.add('opacity-0');
+            setTimeout(() => infoModal.classList.add('hidden'), 300);
+        });
+        
+        [document.getElementById('toc-link'), document.getElementById('toc-link-end')].forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.preventDefault();
+                showModal('Terms of Use', 'By playing this game, you agree to have your brain power increased. We are not responsible for any sudden genius-level insights or the urge to solve complex mathematical problems in your spare time.');
+            });
+        });
+
+        [document.getElementById('privacy-link'), document.getElementById('privacy-link-end')].forEach(el => {
+             el.addEventListener('click', (e) => {
+                e.preventDefault();
+                showModal('Privacy Policy', 'Your data is used only for game analytics and is not shared. All game state is stored on your device.');
+            });
+        });
+
+
         // --- Game Flow ---
-        function startGame() {
+        async function startGame() {
+            if (Tone.context.state !== 'running') {
+                await Tone.start();
+                console.log('Audio context started');
+                setupSounds();
+            }
+            if (typeof gtag === 'function') gtag('event', 'game_start');
             score = 0;
             currentLevel = 1;
             startScreen.classList.add('hidden');
@@ -177,10 +299,10 @@
                 return;
             }
             gameInProgress = true;
-            updateScore(0, true); // Reset score display for the new level
+            updateScore(0, true);
             updateLevelDisplay();
             updateLevelIndicators();
-            const game = chooseRandomGame();
+            const game = currentLevel === 1 ? games[0] : chooseRandomGame();
             game.init();
             startTimer(levelCriteria[currentLevel].time);
         }
@@ -188,6 +310,21 @@
         function endGame(isWinner) {
             clearInterval(timerInterval);
             gameInProgress = false;
+            
+            // --- Personal Best Logic ---
+            const highScore = parseInt(localStorage.getItem('cogniClashHighScore')) || 0;
+            highScoreDisplay.textContent = highScore;
+            if (score > highScore) {
+                localStorage.setItem('cogniClashHighScore', score);
+                highScoreDisplay.textContent = score;
+                newHighScoreMsg.classList.remove('hidden');
+            } else {
+                newHighScoreMsg.classList.add('hidden');
+            }
+
+            if (typeof gtag === 'function') {
+                gtag('event', 'game_end', { 'final_score': score, 'final_level': currentLevel > maxLevel ? maxLevel : currentLevel, 'win_status': isWinner });
+            }
             finalScoreDisplay.textContent = score;
             finalLevelDisplay.textContent = currentLevel > maxLevel ? maxLevel : currentLevel;
             gameScreen.classList.add('hidden');
@@ -195,12 +332,15 @@
         }
 
         function chooseRandomGame() {
-            return games[Math.floor(Math.random() * games.length)];
+            const otherGames = games.slice(1);
+            return otherGames[Math.floor(Math.random() * otherGames.length)];
         }
 
         function levelUp() {
              if (gameInProgress && score >= levelCriteria[currentLevel].score) {
                 gameInProgress = false;
+                if (typeof gtag === 'function') gtag('event', 'level_up', { 'new_level': currentLevel + 1 });
+                playSound('levelUp');
                 currentLevel++;
                 showFeedback('Level Up!', 'text-green-400');
                 clearInterval(timerInterval);
@@ -211,6 +351,7 @@
         // --- UI Updates ---
         function updateScore(points, absolute = false) {
             if(absolute) { score = points; } else { score += points; }
+            if(!absolute && points !== 0) playSound(points > 0 ? 'correct' : 'incorrect');
             scoreDisplay.textContent = score;
         }
 
@@ -262,52 +403,71 @@
             return array;
         }
 
-        // --- GAME 1: Memory Matrix ---
-        function initMemoryMatrix() {
+        // --- GAME 1: Face Recall ---
+        function initFaceRecall() {
             const game = games[0];
             gameTitle.textContent = game.name;
-            gameInstruction.textContent = game.instruction;
             gameArea.innerHTML = '';
-            const gridSize = Math.min(5, currentLevel + 1);
-            const complexity = Math.min(gridSize * gridSize - 1, Math.ceil(currentLevel * 1.5));
-            let pattern = new Set();
-            while (pattern.size < complexity) {
-                pattern.add(Math.floor(Math.random() * gridSize * gridSize));
-            }
-            let userSelection = new Set();
-            let showingPattern = true;
-            const gridContainer = document.createElement('div');
-            gridContainer.className = 'grid gap-2 mx-auto';
-            gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-            for (let i = 0; i < gridSize * gridSize; i++) {
-                const tile = document.createElement('div');
-                tile.className = 'aspect-square bg-gray-700 rounded-lg cursor-pointer transition-colors duration-200';
-                if (pattern.has(i)) tile.classList.add('bg-blue-400');
-                tile.addEventListener('click', () => handleTileClick(tile, i));
-                gridContainer.appendChild(tile);
-            }
-            gameArea.appendChild(gridContainer);
-            const showDuration = Math.max(1500, 3000 - currentLevel * 300);
+            
+            const facePool = ['😀','😎','🥸','😭','😡','😇','🥳','🤯','🤖','👽','🤡','👻','😂','😍','🥶','😱','😈','🤠'];
+            // --- Updated: Increased difficulty ---
+            const facesToRememberCount = currentLevel + 2; 
+            const gridCols = 4;
+            const gridSize = gridCols * 4;
+
+            let solutionFaces = new Set(shuffle(facePool).slice(0, facesToRememberCount));
+            let distractors = shuffle(facePool.filter(f => !solutionFaces.has(f))).slice(0, gridSize - facesToRememberCount);
+            let gridFaces = shuffle([...solutionFaces, ...distractors]);
+            let foundFaces = new Set();
+
+            gameInstruction.textContent = "Memorize these faces!";
+            const memoGrid = document.createElement('div');
+            memoGrid.className = `grid gap-4 justify-center`;
+            memoGrid.style.gridTemplateColumns = `repeat(${Math.min(facesToRememberCount, 5)}, 1fr)`;
+            solutionFaces.forEach(face => {
+                memoGrid.innerHTML += `<div class="text-5xl">${face}</div>`;
+            });
+            gameArea.appendChild(memoGrid);
+
+            const showDuration = 1500 + (facesToRememberCount * 500);
             setTimeout(() => {
-                document.querySelectorAll('#game-area .bg-blue-400').forEach(t => t.classList.remove('bg-blue-400'));
-                showingPattern = false;
+                if (gameInProgress) startQuizPhase();
             }, showDuration);
-            function handleTileClick(tile, index) {
-                if (showingPattern || !gameInProgress || userSelection.has(index)) return;
-                userSelection.add(index);
-                if (pattern.has(index)) {
-                    tile.classList.add('bg-green-500');
+
+            function startQuizPhase() {
+                gameArea.innerHTML = '';
+                gameInstruction.textContent = 'Find the faces you saw.';
+                const quizGrid = document.createElement('div');
+                quizGrid.className = 'grid gap-3 mx-auto';
+                quizGrid.style.gridTemplateColumns = `repeat(${gridCols}, 1fr)`;
+                gridFaces.forEach(face => {
+                    const btn = document.createElement('button');
+                    btn.className = 'face-btn bg-gray-700 p-2 rounded-lg text-4xl';
+                    btn.textContent = face;
+                    btn.dataset.face = face;
+                    btn.addEventListener('click', () => handleFaceClick(btn));
+                    quizGrid.appendChild(btn);
+                });
+                gameArea.appendChild(quizGrid);
+            }
+
+            function handleFaceClick(btn) {
+                if (!gameInProgress || btn.disabled) return;
+                btn.disabled = true;
+                const face = btn.dataset.face;
+                if (solutionFaces.has(face)) {
+                    btn.classList.add('correct');
                     updateScore(100);
                     showFeedback('+100', 'text-green-500');
-                    if (userSelection.size === pattern.size) {
-                        showFeedback('Correct!', 'text-green-400');
-                        setTimeout(() => { if (gameInProgress) { levelUp(); if (gameInProgress) initMemoryMatrix(); } }, 1000);
+                    foundFaces.add(face);
+                    if (foundFaces.size === solutionFaces.size) {
+                        showFeedback('Great memory!', 'text-green-400');
+                        setTimeout(() => { if (gameInProgress) { levelUp(); if (gameInProgress) initFaceRecall(); } }, 1000);
                     }
                 } else {
-                    tile.classList.add('bg-red-500');
-                    updateScore(-50);
-                    showFeedback('Mistake!', 'text-red-500');
-                    setTimeout(() => { if (gameInProgress) initMemoryMatrix(); }, 1000);
+                    btn.classList.add('incorrect');
+                    updateScore(-40);
+                    showFeedback('-40', 'text-red-500');
                 }
             }
         }
@@ -343,12 +503,15 @@
             allCards.forEach(card => card.classList.add('flipped'));
             const revealDuration = Math.max(1000, 2500 - currentLevel * 250);
             setTimeout(() => {
+                if (!gameInProgress) return;
                 allCards.forEach(card => card.classList.remove('flipped'));
                 revealing = false;
                 gameInstruction.textContent = "Match all the pairs of emojis.";
             }, revealDuration);
+
             function handleCardFlip(card) {
                 if (revealing || !gameInProgress || card.classList.contains('flipped') || flippedCards.length >= 2) return;
+                playSound('flip');
                 card.classList.add('flipped');
                 flippedCards.push(card);
                 if (flippedCards.length === 2) {
@@ -369,40 +532,81 @@
                 }
             }
         }
-
-        // --- GAME 3: Number Sum ---
-        function initNumberSum() {
+        
+        // --- GAME 3: Memory Matrix ---
+        function initMemoryMatrix() {
             const game = games[2];
             gameTitle.textContent = game.name;
             gameInstruction.textContent = game.instruction;
             gameArea.innerHTML = '';
-            let currentSum = 0;
+            const gridSize = Math.min(5, currentLevel + 1);
+            const complexity = Math.min(gridSize * gridSize - 1, Math.ceil(currentLevel * 1.5));
+            let pattern = new Set();
+            while (pattern.size < complexity) {
+                pattern.add(Math.floor(Math.random() * gridSize * gridSize));
+            }
+            let userSelection = new Set();
+            let showingPattern = true;
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'grid gap-2 mx-auto';
+            gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'aspect-square bg-gray-700 rounded-lg cursor-pointer transition-colors duration-200';
+                if (pattern.has(i)) tile.classList.add('bg-blue-400');
+                tile.addEventListener('click', () => handleTileClick(tile, i));
+                gridContainer.appendChild(tile);
+            }
+            gameArea.appendChild(gridContainer);
+            const showDuration = Math.max(1500, 3000 - currentLevel * 300);
+            setTimeout(() => {
+                document.querySelectorAll('#game-area .bg-blue-400').forEach(t => t.classList.remove('bg-blue-400'));
+                showingPattern = false;
+            }, showDuration);
+            function handleTileClick(tile, index) {
+                if (showingPattern || !gameInProgress || userSelection.has(index)) return;
+                playSound('click');
+                userSelection.add(index);
+                if (pattern.has(index)) {
+                    tile.classList.add('bg-green-500');
+                    updateScore(100);
+                    showFeedback('+100', 'text-green-500');
+                    if (userSelection.size === pattern.size) {
+                        showFeedback('Correct!', 'text-green-400');
+                        setTimeout(() => { if (gameInProgress) { levelUp(); if (gameInProgress) initMemoryMatrix(); } }, 1000);
+                    }
+                } else {
+                    tile.classList.add('bg-red-500');
+                    updateScore(-50);
+                    showFeedback('Mistake!', 'text-red-500');
+                    setTimeout(() => { if (gameInProgress) initMemoryMatrix(); }, 1000);
+                }
+            }
+        }
 
-            // Difficulty scaling
+        // --- GAME 4: Number Sum ---
+        function initNumberSum() {
+            const game = games[3];
+            gameTitle.textContent = game.name;
+            gameInstruction.textContent = game.instruction;
+            gameArea.innerHTML = '';
+            let currentSum = 0;
             const numbersInSum = currentLevel < 3 ? 2 : 3;
             const gridSize = numbersInSum === 2 ? 9 : 12;
             const maxNumber = 10 + (currentLevel * 5);
-
-            // Generate the set of numbers
             let solutionNumbers = new Set();
             while (solutionNumbers.size < numbersInSum) {
                 solutionNumbers.add(Math.floor(Math.random() * (maxNumber - 5)) + 1);
             }
-            
             const targetNumber = Array.from(solutionNumbers).reduce((a, b) => a + b, 0);
-            
             let gridNumbers = Array.from(solutionNumbers);
             while (gridNumbers.length < gridSize) {
                 const randomNum = Math.floor(Math.random() * maxNumber) + 1;
-                // Avoid adding numbers that could accidentally form the sum
                 if (!gridNumbers.includes(randomNum)) {
                      gridNumbers.push(randomNum);
                 }
             }
-            
             const shuffledGrid = shuffle(gridNumbers);
-            
-            // Build UI
             gameArea.innerHTML = `
                 <div class="text-center mb-4">
                     <p class="text-gray-400">Find numbers that sum to:</p>
@@ -413,38 +617,100 @@
                     ${shuffledGrid.map(num => `<button data-number="${num}" class="number-btn bg-gray-700 p-4 rounded-lg text-2xl font-bold">${num}</button>`).join('')}
                 </div>
             `;
-            
             const currentSumDisplay = document.getElementById('current-sum');
-
             document.querySelectorAll('.number-btn').forEach(button => {
                 button.addEventListener('click', () => {
-                    if (!gameInProgress || button.classList.contains('selected')) return;
-                    
+                    if (!gameInProgress || button.disabled) return;
+                    playSound('click');
                     const num = parseInt(button.dataset.number);
-                    currentSum += num;
+                    if (button.classList.contains('selected')) {
+                        currentSum -= num;
+                        button.classList.remove('selected');
+                    } else {
+                        currentSum += num;
+                        button.classList.add('selected');
+                    }
                     currentSumDisplay.textContent = currentSum;
-                    button.classList.add('selected');
-                    
+                    currentSumDisplay.classList.toggle('over', currentSum > targetNumber);
+
                     if (currentSum === targetNumber) {
                         updateScore(150);
                         showFeedback('Perfect!', 'text-green-500');
                         endRound(true);
-                    } else if (currentSum > targetNumber) {
-                        updateScore(-50);
-                        showFeedback('Too high!', 'text-red-500');
-                        endRound(false);
                     }
                 });
             });
-
             function endRound(success) {
                 document.querySelectorAll('.number-btn').forEach(b => b.disabled = true);
-                setTimeout(() => {
-                    if (gameInProgress) {
-                        if (success) levelUp();
-                        if (gameInProgress) initNumberSum();
+                setTimeout(() => { if (gameInProgress) { if (success) levelUp(); if (gameInProgress) initNumberSum(); } }, 1000);
+            }
+        }
+        
+        // --- GAME 5: Item Recall ---
+        function initItemRecall() {
+            const game = games[4];
+            gameTitle.textContent = game.name;
+            gameArea.innerHTML = '';
+
+            const itemPool = ['🚀','⚽️','🚗','🎈','🎁','🍕','🎸','📚','💻','👑','🌳','🍎','💡','⏰','💎','🏆','🔑','🍔','🚲','🎻'];
+            const itemsToRememberCount = currentLevel + 2;
+            const gridCols = 4;
+            const gridSize = gridCols * 4;
+
+            let solutionItems = new Set(shuffle(itemPool).slice(0, itemsToRememberCount));
+            let distractors = shuffle(itemPool.filter(i => !solutionItems.has(i))).slice(0, gridSize - itemsToRememberCount);
+            let gridItems = shuffle([...solutionItems, ...distractors]);
+            let foundItems = new Set();
+
+            gameInstruction.textContent = "Memorize these items!";
+            const memoGrid = document.createElement('div');
+            memoGrid.className = 'grid gap-4 justify-center';
+            memoGrid.style.gridTemplateColumns = `repeat(${Math.min(itemsToRememberCount, 5)}, 1fr)`;
+            solutionItems.forEach(item => {
+                memoGrid.innerHTML += `<div class="text-5xl">${item}</div>`;
+            });
+            gameArea.appendChild(memoGrid);
+
+            const showDuration = 1500 + (itemsToRememberCount * 500);
+            setTimeout(() => {
+                if (gameInProgress) startQuizPhase();
+            }, showDuration);
+
+            function startQuizPhase() {
+                gameArea.innerHTML = '';
+                gameInstruction.textContent = 'Find the items you saw.';
+                const quizGrid = document.createElement('div');
+                quizGrid.className = 'grid gap-3 mx-auto';
+                quizGrid.style.gridTemplateColumns = `repeat(${gridCols}, 1fr)`;
+                gridItems.forEach(item => {
+                    const btn = document.createElement('button');
+                    btn.className = 'item-btn bg-gray-700 p-2 rounded-lg text-4xl';
+                    btn.textContent = item;
+                    btn.dataset.item = item;
+                    btn.addEventListener('click', () => handleItemClick(btn));
+                    quizGrid.appendChild(btn);
+                });
+                gameArea.appendChild(quizGrid);
+            }
+
+            function handleItemClick(btn) {
+                if (!gameInProgress || btn.disabled) return;
+                btn.disabled = true;
+                const item = btn.dataset.item;
+                if (solutionItems.has(item)) {
+                    btn.classList.add('correct');
+                    updateScore(100);
+                    showFeedback('+100', 'text-green-500');
+                    foundItems.add(item);
+                    if (foundItems.size === solutionItems.size) {
+                        showFeedback('Excellent!', 'text-green-400');
+                        setTimeout(() => { if (gameInProgress) { levelUp(); if (gameInProgress) initItemRecall(); } }, 1000);
                     }
-                }, 1000);
+                } else {
+                    btn.classList.add('incorrect');
+                    updateScore(-40);
+                    showFeedback('-40', 'text-red-500');
+                }
             }
         }
     </script>
