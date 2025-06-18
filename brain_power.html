@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CogniClash - Brain Training Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            touch-action: manipulation; /* Disables double-tap to zoom on mobile */
+        }
+        .card {
+            perspective: 1000px;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+        }
+        .card-front {
+            background-color: #4a5568; /* bg-gray-700 */
+        }
+        .card-back {
+            background-color: #60a5fa; /* bg-blue-400 */
+            transform: rotateY(180deg);
+            font-size: 2rem;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
+        }
+        .level-indicator.active {
+            transform: scale(1.2);
+            background-color: #3b82f6;
+            color: white;
+        }
+        .feedback {
+            animation: fadeOut 1s forwards;
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+        .number-btn {
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .number-btn:hover {
+            background-color: #3b82f6;
+        }
+        .number-btn.selected {
+            background-color: #22c55e; /* green-500 */
+            transform: scale(0.9);
+        }
+        .number-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
+
+    <div id="app" class="w-full max-w-md mx-auto p-4">
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center">
+            <h1 class="text-5xl font-bold text-blue-400 mb-4">CogniClash</h1>
+            <p class="text-lg text-gray-300 mb-8">Sharpen your mind in a duel against yourself!</p>
+            <button id="start-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300 btn-glow">Start Challenge</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <span class="text-lg">Score: <span id="score">0</span></span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-lg">Level: <span id="level-display">1</span></span>
+                </div>
+            </div>
+            
+            <div id="level-indicators" class="flex justify-center space-x-2 mb-4"></div>
+            <div id="timer-container" class="w-full bg-gray-700 rounded-full h-2.5 mb-4">
+                <div id="timer-bar" class="bg-blue-500 h-2.5 rounded-full" style="width: 100%"></div>
+            </div>
+            
+            <h2 id="game-title" class="text-2xl font-semibold text-center mb-4"></h2>
+            <p id="game-instruction" class="text-center text-gray-400 mb-4"></p>
+            
+            <div id="game-area" class="relative min-h-[300px]"></div>
+            <div id="feedback-container" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl font-bold pointer-events-none"></div>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen" class="hidden text-center">
+            <h1 class="text-4xl font-bold text-blue-400 mb-4">Challenge Complete!</h1>
+            <p class="text-2xl mb-2">Final Score: <span id="final-score" class="font-bold"></span></p>
+            <p class="text-xl text-gray-400 mb-6">You reached Level <span id="final-level" class="font-bold"></span>!</p>
+            <button id="restart-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-xl transition duration-300 btn-glow">Play Again</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- DOM Elements ---
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level-display');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const finalLevelDisplay = document.getElementById('final-level');
+        const gameTitle = document.getElementById('game-title');
+        const gameInstruction = document.getElementById('game-instruction');
+        const gameArea = document.getElementById('game-area');
+        const timerBar = document.getElementById('timer-bar');
+        const levelIndicatorsContainer = document.getElementById('level-indicators');
+        const feedbackContainer = document.getElementById('feedback-container');
+
+        // --- Game State ---
+        let score = 0;
+        let currentLevel = 1;
+        const maxLevel = 5;
+        let timerInterval;
+        let gameInProgress = false;
+
+        const levelCriteria = {
+            1: { score: 500, time: 45 },
+            2: { score: 1200, time: 40 },
+            3: { score: 2000, time: 35 },
+            4: { score: 3000, time: 30 },
+            5: { score: 4500, time: 25 }
+        };
+        
+        // --- Updated: Replaced Quick Calc with Number Sum ---
+        const games = [
+            { name: "Memory Matrix", instruction: "Memorize the pattern, then click the correct tiles.", init: initMemoryMatrix },
+            { name: "Emoji Match", instruction: "Memorize the emojis, then match the pairs.", init: initEmojiMatch },
+            { name: "Number Sum", instruction: "Select numbers that add up to the target.", init: initNumberSum }
+        ];
+
+        // --- Event Listeners ---
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+
+        // --- Game Flow ---
+        function startGame() {
+            score = 0;
+            currentLevel = 1;
+            startScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            startNextLevel();
+        }
+
+        function startNextLevel() {
+            if (currentLevel > maxLevel) {
+                endGame(true);
+                return;
+            }
+            gameInProgress = true;
+            updateScore(0, true); // Reset score display for the new level
+            updateLevelDisplay();
+            updateLevelIndicators();
+            const game = chooseRandomGame();
+            game.init();
+            startTimer(levelCriteria[currentLevel].time);
+        }
+
+        function endGame(isWinner) {
+            clearInterval(timerInterval);
+            gameInProgress = false;
+            finalScoreDisplay.textContent = score;
+            finalLevelDisplay.textContent = currentLevel > maxLevel ? maxLevel : currentLevel;
+            gameScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+        }
+
+        function chooseRandomGame() {
+            return games[Math.floor(Math.random() * games.length)];
+        }
+
+        function levelUp() {
+             if (gameInProgress && score >= levelCriteria[currentLevel].score) {
+                gameInProgress = false;
+                currentLevel++;
+                showFeedback('Level Up!', 'text-green-400');
+                clearInterval(timerInterval);
+                setTimeout(startNextLevel, 1500);
+            }
+        }
+        
+        // --- UI Updates ---
+        function updateScore(points, absolute = false) {
+            if(absolute) { score = points; } else { score += points; }
+            scoreDisplay.textContent = score;
+        }
+
+        function updateLevelDisplay() {
+            levelDisplay.textContent = currentLevel;
+        }
+
+        function updateLevelIndicators() {
+            levelIndicatorsContainer.innerHTML = '';
+            for (let i = 1; i <= maxLevel; i++) {
+                const indicator = document.createElement('div');
+                indicator.className = 'level-indicator w-8 h-8 rounded-full flex items-center justify-center font-semibold transition-all duration-300';
+                indicator.textContent = i;
+                if (i < currentLevel) indicator.classList.add('bg-green-500', 'text-white');
+                else if (i === currentLevel) indicator.classList.add('active', 'bg-blue-500', 'text-white');
+                else indicator.classList.add('bg-gray-700', 'text-gray-400');
+                levelIndicatorsContainer.appendChild(indicator);
+            }
+        }
+        
+        function showFeedback(text, colorClass) {
+            const feedbackEl = document.createElement('div');
+            feedbackEl.textContent = text;
+            feedbackEl.className = `feedback font-bold ${colorClass}`;
+            feedbackContainer.innerHTML = '';
+            feedbackContainer.appendChild(feedbackEl);
+        }
+
+        // --- Timer ---
+        function startTimer(duration) {
+            let timeLeft = duration;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                timerBar.style.width = `${(timeLeft / duration) * 100}%`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    if(gameInProgress) endGame(false);
+                }
+            }, 100);
+        }
+        
+        // --- Shared Utility ---
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // --- GAME 1: Memory Matrix ---
+        function initMemoryMatrix() {
+            const game = games[0];
+            gameTitle.textContent = game.name;
+            gameInstruction.textContent = game.instruction;
+            gameArea.innerHTML = '';
+            const gridSize = Math.min(5, currentLevel + 1);
+            const complexity = Math.min(gridSize * gridSize - 1, Math.ceil(currentLevel * 1.5));
+            let pattern = new Set();
+            while (pattern.size < complexity) {
+                pattern.add(Math.floor(Math.random() * gridSize * gridSize));
+            }
+            let userSelection = new Set();
+            let showingPattern = true;
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'grid gap-2 mx-auto';
+            gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'aspect-square bg-gray-700 rounded-lg cursor-pointer transition-colors duration-200';
+                if (pattern.has(i)) tile.classList.add('bg-blue-400');
+                tile.addEventListener('click', () => handleTileClick(tile, i));
+                gridContainer.appendChild(tile);
+            }
+            gameArea.appendChild(gridContainer);
+            const showDuration = Math.max(1500, 3000 - currentLevel * 300);
+            setTimeout(() => {
+                document.querySelectorAll('#game-area .bg-blue-400').forEach(t => t.classList.remove('bg-blue-400'));
+                showingPattern = false;
+            }, showDuration);
+            function handleTileClick(tile, index) {
+                if (showingPattern || !gameInProgress || userSelection.has(index)) return;
+                userSelection.add(index);
+                if (pattern.has(index)) {
+                    tile.classList.add('bg-green-500');
+                    updateScore(100);
+                    showFeedback('+100', 'text-green-500');
+                    if (userSelection.size === pattern.size) {
+                        showFeedback('Correct!', 'text-green-400');
+                        setTimeout(() => { if (gameInProgress) { levelUp(); if (gameInProgress) initMemoryMatrix(); } }, 1000);
+                    }
+                } else {
+                    tile.classList.add('bg-red-500');
+                    updateScore(-50);
+                    showFeedback('Mistake!', 'text-red-500');
+                    setTimeout(() => { if (gameInProgress) initMemoryMatrix(); }, 1000);
+                }
+            }
+        }
+
+        // --- GAME 2: Emoji Match ---
+        function initEmojiMatch() {
+            const game = games[1];
+            gameTitle.textContent = game.name;
+            gameInstruction.textContent = game.instruction;
+            gameArea.innerHTML = '';
+            const pairCountsByLevel = [0, 3, 4, 6, 6, 8];
+            const pairCount = pairCountsByLevel[currentLevel];
+            const gridCols = pairCount === 3 ? 3 : 4;
+            const emojiPool = ['🚀', '🎉', '🧠', '💡', '✨', '🎯', '⭐', '🤖', '👑', '🔥', '💎', '💯'];
+            let emojis = shuffle(emojiPool).slice(0, pairCount);
+            let cardsData = shuffle([...emojis, ...emojis]);
+            let flippedCards = [];
+            let matchedPairs = 0;
+            let revealing = true;
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'grid gap-2 mx-auto';
+            gridContainer.style.gridTemplateColumns = `repeat(${gridCols}, 1fr)`;
+            cardsData.forEach((emoji) => {
+                const card = document.createElement('div');
+                card.className = 'card aspect-square cursor-pointer';
+                card.dataset.emoji = emoji;
+                card.innerHTML = `<div class="card-inner"><div class="card-face card-front"></div><div class="card-face card-back">${emoji}</div></div>`;
+                card.addEventListener('click', () => handleCardFlip(card));
+                gridContainer.appendChild(card);
+            });
+            gameArea.appendChild(gridContainer);
+            const allCards = gameArea.querySelectorAll('.card');
+            allCards.forEach(card => card.classList.add('flipped'));
+            const revealDuration = Math.max(1000, 2500 - currentLevel * 250);
+            setTimeout(() => {
+                allCards.forEach(card => card.classList.remove('flipped'));
+                revealing = false;
+                gameInstruction.textContent = "Match all the pairs of emojis.";
+            }, revealDuration);
+            function handleCardFlip(card) {
+                if (revealing || !gameInProgress || card.classList.contains('flipped') || flippedCards.length >= 2) return;
+                card.classList.add('flipped');
+                flippedCards.push(card);
+                if (flippedCards.length === 2) {
+                    if (flippedCards[0].dataset.emoji === flippedCards[1].dataset.emoji) {
+                        updateScore(150);
+                        showFeedback('+150', 'text-green-500');
+                        flippedCards = [];
+                        matchedPairs++;
+                        if (matchedPairs === pairCount) {
+                            showFeedback('Complete!', 'text-green-400');
+                            setTimeout(() => { if (gameInProgress) { levelUp(); if (gameInProgress) initEmojiMatch(); } }, 1000);
+                        }
+                    } else {
+                        updateScore(-25);
+                        showFeedback('-25', 'text-red-500');
+                        setTimeout(() => { flippedCards.forEach(item => item.classList.remove('flipped')); flippedCards = []; }, 1000);
+                    }
+                }
+            }
+        }
+
+        // --- GAME 3: Number Sum ---
+        function initNumberSum() {
+            const game = games[2];
+            gameTitle.textContent = game.name;
+            gameInstruction.textContent = game.instruction;
+            gameArea.innerHTML = '';
+            let currentSum = 0;
+
+            // Difficulty scaling
+            const numbersInSum = currentLevel < 3 ? 2 : 3;
+            const gridSize = numbersInSum === 2 ? 9 : 12;
+            const maxNumber = 10 + (currentLevel * 5);
+
+            // Generate the set of numbers
+            let solutionNumbers = new Set();
+            while (solutionNumbers.size < numbersInSum) {
+                solutionNumbers.add(Math.floor(Math.random() * (maxNumber - 5)) + 1);
+            }
+            
+            const targetNumber = Array.from(solutionNumbers).reduce((a, b) => a + b, 0);
+            
+            let gridNumbers = Array.from(solutionNumbers);
+            while (gridNumbers.length < gridSize) {
+                const randomNum = Math.floor(Math.random() * maxNumber) + 1;
+                // Avoid adding numbers that could accidentally form the sum
+                if (!gridNumbers.includes(randomNum)) {
+                     gridNumbers.push(randomNum);
+                }
+            }
+            
+            const shuffledGrid = shuffle(gridNumbers);
+            
+            // Build UI
+            gameArea.innerHTML = `
+                <div class="text-center mb-4">
+                    <p class="text-gray-400">Find numbers that sum to:</p>
+                    <p id="target-number" class="text-6xl font-bold text-blue-300">${targetNumber}</p>
+                    <p class="text-gray-400 mt-2">Current Sum: <span id="current-sum" class="font-semibold text-white">0</span></p>
+                </div>
+                <div id="number-grid" class="grid grid-cols-4 gap-3">
+                    ${shuffledGrid.map(num => `<button data-number="${num}" class="number-btn bg-gray-700 p-4 rounded-lg text-2xl font-bold">${num}</button>`).join('')}
+                </div>
+            `;
+            
+            const currentSumDisplay = document.getElementById('current-sum');
+
+            document.querySelectorAll('.number-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    if (!gameInProgress || button.classList.contains('selected')) return;
+                    
+                    const num = parseInt(button.dataset.number);
+                    currentSum += num;
+                    currentSumDisplay.textContent = currentSum;
+                    button.classList.add('selected');
+                    
+                    if (currentSum === targetNumber) {
+                        updateScore(150);
+                        showFeedback('Perfect!', 'text-green-500');
+                        endRound(true);
+                    } else if (currentSum > targetNumber) {
+                        updateScore(-50);
+                        showFeedback('Too high!', 'text-red-500');
+                        endRound(false);
+                    }
+                });
+            });
+
+            function endRound(success) {
+                document.querySelectorAll('.number-btn').forEach(b => b.disabled = true);
+                setTimeout(() => {
+                    if (gameInProgress) {
+                        if (success) levelUp();
+                        if (gameInProgress) initNumberSum();
+                    }
+                }, 1000);
+            }
+        }
+    </script>
+</body>
+</html>
