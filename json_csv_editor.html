@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced JSON/CSV Editor and Differ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QCPVJ6TEQX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-QCPVJ6TEQX');
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        textarea, pre {
+            font-family: monospace;
+            tab-size: 2;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+        }
+        .diff-added { background-color: #e6ffed; color: #22863a; display: block; }
+        .diff-deleted { background-color: #ffeef0; color: #b31d28; display: block; }
+        .diff-modified { background-color: #fffbdd; display: block; }
+        .diff-key { font-weight: bold; color: #032f62; }
+        .tooltip { position: relative; display: inline-block; }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 160px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -80px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Advanced JSON/CSV Editor & Diff Tool</h1>
+            <p class="text-gray-600 mt-2">Filter, edit, merge, and compare your JSON or CSV files.</p>
+        </header>
+
+        <div class="text-center mb-6">
+            <button id="add-json2-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">
+                <i class="fas fa-plus-circle mr-2"></i>Compare or Merge a Second JSON/CSV
+            </button>
+        </div>
+
+        <main id="json-panels-container" class="grid grid-cols-1 gap-8">
+            <!-- Left JSON Panel -->
+            <div id="json-panel-1" class="bg-white p-6 rounded-lg shadow-md flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">JSON 1 / Original</h2>
+                    <div class="flex items-center gap-3">
+                         <button id="deduplicate-btn-1" class="text-gray-500 hover:text-blue-500 tooltip"><i class="fas fa-filter"></i><span class="tooltiptext">Remove duplicate items in arrays</span></button>
+                        <button id="clear-btn-1" title="Clear" class="text-gray-500 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        <button id="copy-btn-1" title="Copy" class="text-gray-500 hover:text-blue-500"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="file-upload-1" class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg inline-block">Upload File 1</label>
+                    <input id="file-upload-1" type="file" class="hidden" accept=".json,.csv">
+                    <span id="file-name-1" class="ml-4 text-gray-500">No file chosen</span>
+                </div>
+                <textarea id="json-display-1" class="bg-gray-50 p-4 rounded-md border border-gray-200 h-96 text-sm flex-grow" placeholder="Paste or upload JSON/CSV here..."></textarea>
+            </div>
+
+            <!-- Right JSON Panel (Initially Hidden) -->
+            <div id="json-panel-2" class="bg-white p-6 rounded-lg shadow-md flex-col hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">JSON 2 / To Merge</h2>
+                    <div class="flex items-center gap-3">
+                        <button id="deduplicate-btn-2" class="text-gray-500 hover:text-blue-500 tooltip"><i class="fas fa-filter"></i><span class="tooltiptext">Remove duplicate items in arrays</span></button>
+                        <button id="clear-btn-2" title="Clear" class="text-gray-500 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        <button id="copy-btn-2" title="Copy" class="text-gray-500 hover:text-blue-500"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="file-upload-2" class="cursor-pointer bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg inline-block">Upload File 2</label>
+                    <input id="file-upload-2" type="file" class="hidden" accept=".json,.csv">
+                    <span id="file-name-2" class="ml-4 text-gray-500">No file chosen</span>
+                </div>
+                <textarea id="json-display-2" class="bg-gray-50 p-4 rounded-md border border-gray-200 h-96 text-sm flex-grow" placeholder="Paste or upload JSON/CSV here..."></textarea>
+            </div>
+        </main>
+
+        <!-- Action Controls -->
+        <div class="bg-white p-6 rounded-lg shadow-md mt-8">
+            <h2 class="text-xl font-semibold mb-4">Actions</h2>
+            <div class="flex flex-wrap items-start gap-6">
+                <div class="flex-1 min-w-[250px]">
+                     <label class="block text-sm font-medium text-gray-700 mb-1">Clean & Validate</label>
+                    <div class="flex gap-2">
+                        <button id="resolve-duplicates-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg tooltip">Resolve Duplicates
+                           <span class="tooltiptext">Find and interactively resolve duplicate keys within objects.</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex-1 min-w-[250px]">
+                     <label for="filter-key-input" class="block text-sm font-medium text-gray-700 mb-1">Filter Keys in JSON 1</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="filter-key-input" placeholder="key1, /patt.*/" class="border rounded-lg px-3 py-2 w-full">
+                        <button id="filter-btn" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg">Filter</button>
+                    </div>
+                </div>
+                <div id="merge-actions" class="flex-1 min-w-[250px] hidden">
+                     <label class="block text-sm font-medium text-gray-700 mb-1">Merge / Augment</label>
+                    <div class="flex flex-wrap gap-2">
+                         <button id="merge-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg">Merge <i class="fas fa-arrow-right-long ml-2"></i></button>
+                         <button id="augment-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-arrow-left-long mr-2"></i> Augment</button>
+                    </div>
+                </div>
+                <div class="flex-1 min-w-[250px]">
+                    <label for="delete-key-input" class="block text-sm font-medium text-gray-700 mb-1">Delete Key from JSON 1</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="delete-key-input" placeholder="e.g., user.name" class="border rounded-lg px-3 py-2 w-full">
+                        <button id="delete-key-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result and Diff Panel -->
+        <div id="result-panel" class="bg-white p-6 rounded-lg shadow-md mt-8 hidden">
+            <h2 class="text-xl font-semibold mb-4">Result</h2>
+            <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                <span id="status" class="text-lg font-medium text-gray-700">Status: Waiting for action...</span>
+                 <div id="download-buttons" class="hidden">
+                     <button id="download-json-btn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-download mr-2"></i>Download JSON</button>
+                     <button id="download-csv-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg ml-2"><i class="fas fa-file-csv mr-2"></i>Download CSV</button>
+                 </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-2">Resulting JSON</h3>
+                    <pre id="result-display" class="bg-gray-50 p-4 rounded-md overflow-auto h-96 text-sm border"></pre>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-2">Differences</h3>
+                    <div id="diff-display" class="bg-gray-50 p-4 rounded-md overflow-auto h-96 text-sm border"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div id="alert-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+            <h4 id="alert-title" class="text-xl font-bold mb-4"></h4>
+            <p id="alert-message" class="text-gray-700 mb-6"></p>
+            <button id="alert-close" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg w-full">Close</button>
+        </div>
+    </div>
+
+    <div id="duplicate-resolver-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-4xl w-full">
+            <div id="duplicate-modal-title" class="text-xl font-bold mb-4 text-center"></div>
+            <div class="grid grid-cols-2 gap-6 mb-6">
+                <div>
+                    <h5 class="text-lg font-semibold mb-2">First Instance</h5>
+                    <pre id="duplicate-preview-1" class="bg-gray-50 p-3 rounded-md border h-64 overflow-auto"></pre>
+                </div>
+                <div>
+                    <h5 class="text-lg font-semibold mb-2">Second Instance</h5>
+                    <pre id="duplicate-preview-2" class="bg-gray-50 p-3 rounded-md border h-64 overflow-auto"></pre>
+                </div>
+            </div>
+            <div class="flex justify-center items-center gap-4 mb-4">
+                <input type="checkbox" id="duplicate-apply-all" class="h-4 w-4">
+                <label for="duplicate-apply-all">Apply this choice to all remaining duplicates</label>
+            </div>
+            <div class="flex justify-center gap-4">
+                <button id="duplicate-keep-1" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg">Keep 1st</button>
+                <button id="duplicate-keep-2" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg">Keep 2nd</button>
+                <button id="duplicate-skip" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg">Skip</button>
+                <button id="duplicate-cancel" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg">Cancel All</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Store JSON data
+        let json1 = null, json2 = null, resultJson = null;
+
+        // --- DOM Elements ---
+        const getEl = id => document.getElementById(id);
+        const addJson2Btn = getEl('add-json2-btn');
+        const jsonPanelsContainer = getEl('json-panels-container');
+        const jsonPanel2 = getEl('json-panel-2');
+        const mergeActions = getEl('merge-actions');
+        const fileUpload1 = getEl('file-upload-1');
+        const fileName1 = getEl('file-name-1');
+        const jsonDisplay1 = getEl('json-display-1');
+        const fileUpload2 = getEl('file-upload-2');
+        const fileName2 = getEl('file-name-2');
+        const jsonDisplay2 = getEl('json-display-2');
+        const statusEl = getEl('status');
+        const resultPanel = getEl('result-panel');
+        const resultDisplay = getEl('result-display');
+        const diffDisplay = getEl('diff-display');
+        const downloadButtons = getEl('download-buttons');
+        
+        // Modals
+        const alertModal = getEl('alert-modal');
+        const alertTitle = getEl('alert-title');
+        const alertMessage = getEl('alert-message');
+        const alertClose = getEl('alert-close');
+        const duplicateResolverModal = getEl('duplicate-resolver-modal');
+
+        // --- Utility Functions ---
+        const isObject = (item) => item && typeof item === 'object' && !Array.isArray(item);
+        const customAlert = (title, message) => {
+            alertTitle.textContent = title;
+            alertMessage.textContent = message;
+            alertModal.classList.remove('hidden');
+        };
+        alertClose.addEventListener('click', () => alertModal.classList.add('hidden'));
+
+        // --- Data Conversion & Filtering (Omitted for brevity, same as before) ---
+        function csvToJson(csv) { try { const lines = csv.split('\n').filter(line => line.trim() !== ''); if (lines.length < 2) return []; const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '')); const result = []; for (let i = 1; i < lines.length; i++) { const values = lines[i].match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || []; const obj = {}; for (let j = 0; j < headers.length; j++) { obj[headers[j]] = (values[j] || '').trim().replace(/"/g, ''); } result.push(obj); } return result; } catch (e) { console.error(e); throw new Error("Failed to parse CSV."); } }
+        function jsonToCsv(jsonArray) { if (!Array.isArray(jsonArray) || jsonArray.length === 0) { customAlert('Conversion Failed', 'Can only convert a non-empty array of objects to CSV.'); return null; } try { const headers = Object.keys(jsonArray[0]); let csv = headers.join(',') + '\n'; jsonArray.forEach(row => { const values = headers.map(header => { let value = row[header] == null ? '' : String(row[header]); if (value.includes(',') || value.includes('"') || value.includes('\n')) { value = `"${value.replace(/"/g, '""')}"`; } return value; }); csv += values.join(',') + '\n'; }); return csv; } catch (e) { customAlert('Conversion Failed', 'Error converting JSON to CSV.'); return null; } }
+        function filterObjectByKeys(obj, filterQuery) { if (!isObject(obj)) return obj; const filters = filterQuery.split(',').map(f => f.trim()).filter(f => f); if (filters.length === 0) return obj; const regexFilters = []; const stringFilters = []; filters.forEach(f => { if (f.startsWith('/') && f.endsWith('/')) { try { regexFilters.push(new RegExp(f.slice(1, -1))); } catch (e) { console.warn(`Invalid regex: ${f}`); } } else { stringFilters.push(f); } }); const result = {}; for (const key in obj) { if (obj.hasOwnProperty(key)) { if (stringFilters.includes(key) || regexFilters.some(re => re.test(key))) { result[key] = obj[key]; } } } return result; }
+        
+        // --- Input Handling (Omitted for brevity, same as before) ---
+        const handleFileUpload = (file, nameEl, displayEl) => { if (file) { nameEl.textContent = file.name; const reader = new FileReader(); reader.onload = (e) => { const content = e.target.result; if (file.name.endsWith('.csv')) { displayEl.value = content; } else { try { displayEl.value = JSON.stringify(JSON.parse(content), null, 2); } catch { displayEl.value = content; } } displayEl.dispatchEvent(new Event('input')); }; reader.readAsText(file); } };
+        const handleJsonInput = (event, jsonVarSetter) => { const text = event.target.value; event.target.classList.remove('border-red-500', 'border-green-500'); if (!text) { jsonVarSetter(null); return; } try { jsonVarSetter(JSON.parse(text)); event.target.classList.add('border-green-500'); } catch (jsonError) { try { jsonVarSetter(csvToJson(text)); event.target.classList.add('border-green-500'); } catch (csvError) { jsonVarSetter(null); event.target.classList.add('border-red-500'); } } };
+
+
+        // --- Event Listeners ---
+        addJson2Btn.addEventListener('click', () => { addJson2Btn.classList.add('hidden'); jsonPanel2.classList.remove('hidden'); jsonPanel2.style.display = 'flex'; jsonPanelsContainer.classList.add('lg:grid-cols-2'); mergeActions.classList.remove('hidden'); });
+        fileUpload1.addEventListener('change', (e) => handleFileUpload(e.target.files[0], fileName1, jsonDisplay1));
+        jsonDisplay1.addEventListener('input', (e) => handleJsonInput(e, (val) => json1 = val));
+        fileUpload2.addEventListener('change', (e) => handleFileUpload(e.target.files[0], fileName2, jsonDisplay2));
+        jsonDisplay2.addEventListener('input', (e) => handleJsonInput(e, (val) => json2 = val));
+        
+        getEl('resolve-duplicates-btn').addEventListener('click', () => startDuplicateResolutionWorkflow(jsonDisplay1));
+        getEl('filter-btn').addEventListener('click', () => { if (!json1) { customAlert('Action Failed', 'Please provide JSON 1 to filter.'); return; } const filterQuery = getEl('filter-key-input').value; if (!filterQuery) { customAlert('Action Failed', 'Please enter a filter query.'); return; } if (Array.isArray(json1)) { resultJson = json1.map(item => filterObjectByKeys(item, filterQuery)); } else { resultJson = filterObjectByKeys(json1, filterQuery); } updateResult(`Filtered JSON 1`, json1, resultJson); });
+        getEl('merge-btn').addEventListener('click', () => { if (!json1 || !json2) { customAlert('Action Failed', 'Please provide two valid JSON/CSV objects to merge.'); return; } resultJson = deepMerge(JSON.parse(JSON.stringify(json1)), JSON.parse(JSON.stringify(json2))); updateResult('Merged (JSON2 into JSON1)', json1, resultJson); });
+        getEl('augment-btn').addEventListener('click', () => { if (!json1 || !json2) { customAlert('Action Failed', 'Please provide two valid JSON/CSV objects to augment.'); return; } resultJson = deepMerge(JSON.parse(JSON.stringify(json2)), JSON.parse(JSON.stringify(json1))); updateResult('Augmented (JSON1 with JSON2)', json1, resultJson); });
+        getEl('deduplicate-btn-1').addEventListener('click', () => { if (!json1) { customAlert('Action Failed', 'JSON 1 is empty or invalid.'); return; } json1 = removeDuplicatesInObject(json1); jsonDisplay1.value = JSON.stringify(json1, null, 2); });
+        
+        // --- Duplicate Key Resolution ---
+
+        async function startDuplicateResolutionWorkflow(displayElement) {
+            let jsonString = displayElement.value;
+            if (!jsonString) { customAlert('Action Failed', 'JSON input is empty.'); return; }
+
+            const duplicates = findDuplicateKeys(jsonString);
+            if (duplicates.length === 0) { customAlert('Success', 'No duplicate keys found within any object.'); return; }
+
+            let applyAllChoice = null;
+
+            // Process duplicates from the end of the string to the beginning to avoid index shifting issues.
+            duplicates.sort((a, b) => b.occurrences[0].keyStartIndex - a.occurrences[0].keyStartIndex);
+
+            for (const issue of duplicates) {
+                const choice = applyAllChoice || await promptUserToResolve(issue);
+                if (choice === 'cancel') { customAlert('Cancelled', 'Duplicate resolution was cancelled.'); return; }
+                if (getEl('duplicate-apply-all').checked && !applyAllChoice) { applyAllChoice = choice; }
+
+                if (choice === 'keepFirst') {
+                    jsonString = removeJsonEntry(jsonString, issue.occurrences[1]);
+                } else if (choice === 'keepSecond') {
+                    jsonString = removeJsonEntry(jsonString, issue.occurrences[0]);
+                }
+            }
+
+            try {
+                displayElement.value = JSON.stringify(JSON.parse(jsonString), null, 2);
+                displayElement.dispatchEvent(new Event('input'));
+                customAlert('Success', 'Duplicate resolution complete.');
+            } catch(e) {
+                console.error("Error parsing final JSON:", e);
+                customAlert('Error', 'Could not create valid JSON after removing duplicates. Please check the input.');
+                displayElement.value = jsonString; // Show the broken string for debugging
+            }
+        }
+        
+        function removeJsonEntry(jsonString, occurrence) {
+            const pre = jsonString.substring(0, occurrence.keyStartIndex);
+            const post = jsonString.substring(occurrence.valueEndIndex);
+            
+            if (post.trim().startsWith(',')) {
+                return pre + post.substring(post.indexOf(',') + 1);
+            }
+            if (pre.trim().endsWith(',')) {
+                const lastCommaIndex = pre.lastIndexOf(',');
+                return pre.substring(0, lastCommaIndex) + post;
+            }
+            return pre + post;
+        }
+
+        function findJsonValueEnd(str, startIndex) {
+            let level = 0;
+            let inString = false;
+            let i = startIndex;
+            while(i < str.length && /\s/.test(str[i])) { i++; } // Skip whitespace
+
+            for (; i < str.length; i++) {
+                const char = str[i];
+                if (inString) {
+                    if (char === '"' && str[i-1] !== '\\') inString = false;
+                    continue;
+                }
+                if (char === '"') inString = true;
+                else if (char === '{' || char === '[') level++;
+                else if (char === '}' || char === ']') level--;
+                
+                if (!inString && level < 0) return i; 
+                if (!inString && level === 0 && (char === ',' || char === '}' || char === ']')) return i;
+            }
+            return str.length;
+        }
+
+        // ** REWRITTEN DUPLICATE FINDER **
+        function findDuplicateKeys(str) {
+            const issues = [];
+            const keyRegex = /"((?:[^"\\]|\\.)*)"\s*:/g;
+            const stack = [{ keys: new Map(), contextKeys: [] }];
+
+            let i = 0;
+            while(i < str.length){
+                const char = str[i];
+                if (char === '{') {
+                    stack.push({ keys: new Map(), contextKeys: [] });
+                    i++;
+                    continue;
+                }
+                if (char === '}') {
+                    if(stack.length > 1) stack.pop();
+                    i++;
+                    continue;
+                }
+                
+                keyRegex.lastIndex = i;
+                const match = keyRegex.exec(str);
+
+                if (match && match.index === i) {
+                    const key = match[1];
+                    const scope = stack[stack.length - 1];
+                    scope.contextKeys.push(key);
+                    
+                    const valueStartIndex = match.index + match[0].length;
+                    const valueEndIndex = findJsonValueEnd(str, valueStartIndex);
+                    const occurrence = {
+                        keyStartIndex: match.index,
+                        valueStartIndex: valueStartIndex,
+                        valueEndIndex: valueEndIndex,
+                        valueString: str.substring(valueStartIndex, valueEndIndex).trim()
+                    };
+
+                    if (scope.keys.has(key)) {
+                        let issue = issues.find(iss => iss.key === key && iss.scope === scope);
+                        if(issue) {
+                            issue.occurrences.push(occurrence);
+                        } else {
+                            const firstOccurrence = scope.keys.get(key);
+                            issues.push({
+                                key: key,
+                                scope: scope, // Reference to the scope object
+                                contextKeys: scope.contextKeys.filter(k => k !== key),
+                                occurrences: [firstOccurrence, occurrence]
+                            });
+                        }
+                    } else {
+                        scope.keys.set(key, occurrence);
+                    }
+                    i = valueEndIndex;
+                } else {
+                    i++;
+                }
+            }
+            return issues;
+        }
+
+        function promptUserToResolve(issue) {
+            return new Promise(resolve => {
+                const [occ1, occ2] = issue.occurrences;
+                
+                let titleHtml = `<span class="text-2xl">Resolve duplicate key: <strong>"${issue.key}"</strong></span>`;
+                if (issue.contextKeys && issue.contextKeys.length > 0) {
+                    const maxKeys = 5;
+                    const displayedKeys = issue.contextKeys.slice(0, maxKeys).join(', ');
+                    const more = issue.contextKeys.length > maxKeys ? '...' : '';
+                    titleHtml += `<br><span class="text-sm font-normal text-gray-500">In object with keys: ${displayedKeys}${more}</span>`;
+                }
+                getEl('duplicate-modal-title').innerHTML = titleHtml;
+
+                const formatPreview = (valueString) => {
+                    try {
+                        return JSON.stringify(JSON.parse(valueString), null, 2);
+                    } catch (e) {
+                        return valueString;
+                    }
+                };
+
+                getEl('duplicate-preview-1').textContent = formatPreview(occ1.valueString);
+                getEl('duplicate-preview-2').textContent = formatPreview(occ2.valueString);
+                
+                duplicateResolverModal.classList.remove('hidden');
+
+                const cleanup = () => {
+                    getEl('duplicate-keep-1').onclick = null;
+                    getEl('duplicate-keep-2').onclick = null;
+                    getEl('duplicate-skip').onclick = null;
+                    getEl('duplicate-cancel').onclick = null;
+                    duplicateResolverModal.classList.add('hidden');
+                };
+
+                getEl('duplicate-keep-1').onclick = () => { cleanup(); resolve('keepFirst'); };
+                getEl('duplicate-keep-2').onclick = () => { cleanup(); resolve('keepSecond'); };
+                getEl('duplicate-skip').onclick = () => { cleanup(); resolve('skip'); };
+                getEl('duplicate-cancel').onclick = () => { cleanup(); resolve('cancel'); };
+            });
+        }
+
+        // --- Core Logic & UI Update (Mostly Unchanged) ---
+        function deepMerge(target, source) { const output = { ...target }; if (isObject(target) && isObject(source)) { Object.keys(source).forEach(key => { if (isObject(source[key]) && key in target && isObject(target[key])) { output[key] = deepMerge(target[key], source[key]); } else if (Array.isArray(source[key]) && key in target && Array.isArray(target[key])) { output[key] = Array.from(new Set(target[key].concat(source[key]).map(item => JSON.stringify(item)))).map(str => JSON.parse(str)); } else { output[key] = source[key]; } }); } return output; }
+        function removeDuplicatesInObject(obj) { if (Array.isArray(obj)) { return Array.from(new Set(obj.map(item => JSON.stringify(item)))).map(str => JSON.parse(str)); } if (isObject(obj)) { return Object.keys(obj).reduce((acc, key) => { acc[key] = removeDuplicatesInObject(obj[key]); return acc; }, {}); } return obj; }
+        function updateResult(action, oldJson, newJson) { resultPanel.classList.remove('hidden'); statusEl.textContent = `Status: ${action}`; resultDisplay.textContent = JSON.stringify(newJson, null, 2); diffDisplay.innerHTML = generateDiffHtml(oldJson, newJson); downloadButtons.classList.remove('hidden'); }
+        function generateDiffHtml(obj1, obj2, prefix = '') { if (!isObject(obj1) || !isObject(obj2)) return `<span>Root types differ.</span>`; const allKeys = new Set([...Object.keys(obj1), ...Object.keys(obj2)]); let diffHtml = ''; for (const key of allKeys) { const newPrefix = prefix ? `${prefix}.${key}` : key; const val1 = obj1[key]; const val2 = obj2[key]; if (!obj2.hasOwnProperty(key)) { diffHtml += `<span class="diff-deleted"><span class="diff-key">${newPrefix}:</span> (deleted)</span>`; } else if (!obj1.hasOwnProperty(key)) { diffHtml += `<span class="added"><span class="diff-key">${newPrefix}:</span> (added)</span>`; } else if (JSON.stringify(val1) !== JSON.stringify(val2)) { if (isObject(val1) && isObject(val2)) { diffHtml += generateDiffHtml(val1, val2, newPrefix); } else { diffHtml += `<span class="diff-modified"><span class="diff-key">${newPrefix}:</span> modified</span>`; } } } return diffHtml || '<span>No differences found.</span>'; }
+    </script>
+</body>
+</html>
