@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamified Prompt Archiver</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ------------------- */
+        /* Basic Setup & Theme */
+        /* ------------------- */
+        :root {
+            --bg-color: #1a1a1a;
+            --surface-color: #2c2c2c;
+            --primary-color: #4a90e2;
+            --danger-color: #e74c3c;
+            --text-color: #e0e0e0;
+            --text-muted-color: #888888;
+            --border-color: #444444;
+            --success-color: #28a745;
+            --bronze-color: #cd7f32;
+            --silver-color: #c0c0c0;
+            --gold-color: #ffd700;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2rem 1rem;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ------------------- */
+        /* Layout & Containers */
+        /* ------------------- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+        }
+        
+        header h1 {
+            margin: 0;
+            font-size: 1.75rem;
+            color: var(--primary-color);
+        }
+
+        .main-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 2rem;
+        }
+
+        .sidebar {
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            align-self: start;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .sidebar h3 {
+            margin-top: 0;
+            color: var(--text-muted-color);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #tag-list, #folder-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        #tag-list li, #folder-list li {
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 0.95rem;
+            word-break: break-all;
+        }
+
+        #tag-list li:hover, #folder-list li:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        #tag-list li.active, #folder-list li.active {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .prompt-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            align-content: start;
+        }
+
+        /* ------------------- */
+        /* Form & Modal Styles */
+        /* ------------------- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 1000;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            transform: scale(0.95);
+            transition: transform 0.3s;
+        }
+        
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+        
+        #confirm-modal .modal-content {
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-muted-color);
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-color);
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .modal-actions, .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        #confirm-modal .modal-actions {
+             justify-content: center;
+        }
+
+        /* ------------------- */
+        /* Button Styles       */
+        /* ------------------- */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-muted-color);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+        }
+        .btn-icon:hover {
+            color: var(--text-color);
+            background-color: var(--border-color);
+        }
+
+
+        /* ------------------- */
+        /* Prompt Card Styles  */
+        /* ------------------- */
+        .prompt-card {
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border: 1px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+            cursor: pointer;
+        }
+        
+        .prompt-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+        
+        .prompt-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .prompt-card-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            word-break: break-word;
+        }
+
+        .prompt-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-weight: 600;
+            color: #111;
+            flex-shrink: 0;
+            margin-left: 0.5rem;
+        }
+        
+        .badge-bronze { background-color: var(--bronze-color); }
+        .badge-silver { background-color: var(--silver-color); }
+        .badge-gold { background-color: var(--gold-color); }
+
+        .prompt-card-body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 150px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .prompt-card-body::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to bottom, transparent, var(--bg-color));
+        }
+
+        .prompt-card-body .syntax-command { color: var(--primary-color); font-weight: bold; }
+        .prompt-card-body .syntax-context { color: #98c379; }
+        .prompt-card-body .syntax-variable { color: #e5c07b; }
+
+        .prompt-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .prompt-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            background-color: var(--border-color);
+            color: var(--text-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        
+        .prompt-actions button {
+            background: none;
+            border: none;
+            color: var(--text-muted-color);
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        .prompt-actions button:hover {
+            color: var(--text-color);
+        }
+
+        /* ------------------- */
+        /* Misc & Responsive   */
+        /* ------------------- */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--success-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 2000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            visibility: visible;
+        }
+
+        #search-input {
+            width: 250px;
+            background-color: var(--surface-color);
+        }
+
+        @media (max-width: 992px) {
+            .main-controls {
+                justify-content: flex-start;
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                position: static;
+                margin-bottom: 2rem;
+            }
+            header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Prompt Vault</h1>
+            <div class="main-controls">
+                <input type="text" id="search-input" placeholder="Search prompts...">
+                <button class="btn btn-secondary" id="import-json-btn">Import (JSON)</button>
+                <button class="btn btn-secondary" id="backup-json-btn">Backup (JSON)</button>
+                <button class="btn btn-secondary" id="export-txt-btn">Export (.txt)</button>
+                <button class="btn btn-primary" id="new-prompt-btn">New Prompt</button>
+            </div>
+        </header>
+
+        <main>
+            <aside class="sidebar">
+                <h3>Tags</h3>
+                <ul id="tag-list">
+                    <!-- Tags will be dynamically inserted here -->
+                </ul>
+            </aside>
+            <div class="prompt-grid" id="prompt-grid">
+                <!-- Prompt cards will be dynamically inserted here -->
+            </div>
+        </main>
+    </div>
+    
+    <input type="file" id="import-file-input" accept=".json" style="display: none;">
+
+    <!-- Add/Edit Prompt Modal -->
+    <div class="modal-overlay" id="prompt-modal">
+        <div class="modal-content">
+            <form id="prompt-form">
+                <input type="hidden" id="prompt-id">
+                <h2 id="modal-title">New Prompt</h2>
+                <div class="form-group">
+                    <label for="prompt-title">Title</label>
+                    <input type="text" id="prompt-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="prompt-text">Prompt</label>
+                    <textarea id="prompt-text" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="prompt-context">Context (Optional)</label>
+                    <textarea id="prompt-context"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="prompt-command">Command (Optional)</label>
+                    <input type="text" id="prompt-command" placeholder="e.g., /imagine, /summarize">
+                </div>
+                <div class="form-group">
+                    <label for="prompt-tags">Tags (comma-separated)</label>
+                    <input type="text" id="prompt-tags">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="save-btn">Save Prompt</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal-content">
+            <p id="confirm-message">Are you sure?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="confirm-cancel-btn">Cancel</button>
+                <button class="btn btn-danger" id="confirm-ok-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // DOM Elements
+        const newPromptBtn = document.getElementById('new-prompt-btn');
+        const modal = document.getElementById('prompt-modal');
+        const promptForm = document.getElementById('prompt-form');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const promptGrid = document.getElementById('prompt-grid');
+        const modalTitle = document.getElementById('modal-title');
+        const searchInput = document.getElementById('search-input');
+        const tagList = document.getElementById('tag-list');
+        const exportTxtBtn = document.getElementById('export-txt-btn');
+        const backupJsonBtn = document.getElementById('backup-json-btn');
+        const importJsonBtn = document.getElementById('import-json-btn');
+        const importFileInput = document.getElementById('import-file-input');
+
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmMessage = document.getElementById('confirm-message');
+        const confirmOkBtn = document.getElementById('confirm-ok-btn');
+        const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+
+
+        // State
+        let prompts = [];
+        let editingPromptId = null;
+        let activeTag = null;
+        let searchQuery = '';
+
+        // --- Data Persistence ---
+        function getPromptsFromStorage() {
+            const storedPrompts = localStorage.getItem('prompts');
+            return storedPrompts ? JSON.parse(storedPrompts) : [];
+        }
+
+        function savePromptsToStorage() {
+            localStorage.setItem('prompts', JSON.stringify(prompts));
+        }
+
+        // --- Rendering ---
+        function render() {
+            renderTags();
+            renderPrompts();
+        }
+
+        function renderPrompts() {
+            promptGrid.innerHTML = '';
+            
+            let filteredPrompts = [...prompts];
+
+            // Filter by tag
+            if (activeTag) {
+                filteredPrompts = filteredPrompts.filter(p => p.tags.includes(activeTag));
+            }
+
+            // Filter by search query
+            if (searchQuery) {
+                const lowerCaseQuery = searchQuery.toLowerCase();
+                filteredPrompts = filteredPrompts.filter(p => 
+                    p.title.toLowerCase().includes(lowerCaseQuery) ||
+                    p.text.toLowerCase().includes(lowerCaseQuery) ||
+                    (p.context && p.context.toLowerCase().includes(lowerCaseQuery))
+                );
+            }
+
+            if (filteredPrompts.length === 0) {
+                promptGrid.innerHTML = '<p>No prompts found. Create one!</p>';
+                return;
+            }
+
+            filteredPrompts.forEach(prompt => {
+                const card = createPromptCard(prompt);
+                promptGrid.appendChild(card);
+            });
+        }
+        
+        function renderTags() {
+            const allTags = new Set(prompts.flatMap(p => p.tags));
+            tagList.innerHTML = `<li data-tag="all" class="${!activeTag ? 'active' : ''}">All Prompts</li>`;
+            allTags.forEach(tag => {
+                if(tag.trim() === '') return;
+                const li = document.createElement('li');
+                li.textContent = tag;
+                li.dataset.tag = tag;
+                li.className = tag === activeTag ? 'active' : '';
+                tagList.appendChild(li);
+            });
+        }
+
+        function createPromptCard(prompt) {
+            const card = document.createElement('div');
+            card.className = 'prompt-card';
+            card.dataset.id = prompt.id;
+
+            const { badgeClass, badgeText } = getBadgeForPrompt(prompt);
+            
+            card.innerHTML = `
+                <div class="prompt-card-header">
+                    <h3>${escapeHTML(prompt.title)}</h3>
+                    <span class="prompt-badge ${badgeClass}">${badgeText}</span>
+                </div>
+                <div class="prompt-card-body">
+                    ${formatPromptText(prompt)}
+                </div>
+                <div class="prompt-card-footer">
+                    <div class="prompt-tags">
+                        ${prompt.tags.map(tag => `<span class="tag">${escapeHTML(tag)}</span>`).join('')}
+                    </div>
+                    <div class="prompt-actions">
+                         <button class="btn-icon copy-btn" title="Copy to Clipboard">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zM-1 7a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1h-15A.5.5 0 0 1-1 7z"/></svg>
+                        </button>
+                        <button class="btn-icon delete-btn" title="Delete Prompt">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            card.querySelector('.copy-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                copyPromptToClipboard(prompt);
+            });
+            card.querySelector('.delete-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                showConfirmation('Are you sure you want to delete this prompt?', () => {
+                    deletePrompt(prompt.id);
+                });
+            });
+            card.addEventListener('click', () => openModalForEdit(prompt.id));
+
+            return card;
+        }
+
+        // --- Gamification & Formatting ---
+        function getBadgeForPrompt(prompt) {
+            const wordCount = prompt.text.split(/\s+/).length;
+            if (wordCount > 150) return { badgeClass: 'badge-gold', badgeText: 'Gold' };
+            if (wordCount > 50) return { badgeClass: 'badge-silver', badgeText: 'Silver' };
+            return { badgeClass: 'badge-bronze', badgeText: 'Bronze' };
+        }
+        
+        function formatPromptText(prompt) {
+            let fullText = '';
+            if (prompt.command) {
+                fullText += `<span class="syntax-command">${escapeHTML(prompt.command)}</span> `;
+            }
+            fullText += escapeHTML(prompt.text).replace(/\{(\w+)\}/g, '<span class="syntax-variable">{$1}</span>');
+            if (prompt.context) {
+                fullText += `\n\n<span class="syntax-context">--context\n${escapeHTML(prompt.context)}</span>`;
+            }
+            return fullText;
+        }
+
+        function escapeHTML(str) {
+            const p = document.createElement('p');
+            p.textContent = str;
+            return p.innerHTML;
+        }
+
+        // --- Modal Logic ---
+        function openModalForNew() {
+            editingPromptId = null;
+            modalTitle.textContent = 'New Prompt';
+            promptForm.reset();
+            modal.classList.add('visible');
+            document.getElementById('prompt-title').focus();
+        }
+
+        function openModalForEdit(id) {
+            const prompt = prompts.find(p => p.id === id);
+            if (!prompt) return;
+            
+            editingPromptId = id;
+            modalTitle.textContent = 'Edit Prompt';
+            
+            document.getElementById('prompt-id').value = prompt.id;
+            document.getElementById('prompt-title').value = prompt.title;
+            document.getElementById('prompt-text').value = prompt.text;
+            document.getElementById('prompt-context').value = prompt.context || '';
+            document.getElementById('prompt-command').value = prompt.command || '';
+            document.getElementById('prompt-tags').value = prompt.tags.join(', ');
+            
+            modal.classList.add('visible');
+        }
+
+        function closeModal() {
+            modal.classList.remove('visible');
+        }
+
+        // --- Confirmation Modal ---
+        function showConfirmation(message, onConfirm) {
+            confirmMessage.textContent = message;
+            
+            // Clone and replace the OK button to remove old event listeners
+            const newOkBtn = confirmOkBtn.cloneNode(true);
+            confirmOkBtn.parentNode.replaceChild(newOkBtn, confirmOkBtn);
+
+            newOkBtn.onclick = () => {
+                onConfirm();
+                confirmModal.classList.remove('visible');
+            };
+
+            confirmModal.classList.add('visible');
+        }
+
+        // --- CRUD Operations ---
+        function savePrompt(e) {
+            e.preventDefault();
+            const title = document.getElementById('prompt-title').value.trim();
+            const text = document.getElementById('prompt-text').value.trim();
+            
+            if (!title || !text) {
+                showToast('Title and Prompt text are required.', 'error');
+                return;
+            }
+
+            const promptData = {
+                title,
+                text,
+                context: document.getElementById('prompt-context').value.trim(),
+                command: document.getElementById('prompt-command').value.trim(),
+                tags: document.getElementById('prompt-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+            };
+
+            if (editingPromptId) {
+                const index = prompts.findIndex(p => p.id === editingPromptId);
+                if (index > -1) {
+                    prompts[index] = { ...prompts[index], ...promptData };
+                }
+            } else {
+                const newPrompt = {
+                    ...promptData,
+                    id: Date.now().toString(),
+                    createdAt: new Date().toISOString(),
+                };
+                prompts.unshift(newPrompt);
+            }
+
+            savePromptsToStorage();
+            render();
+            closeModal();
+        }
+
+        function deletePrompt(id) {
+            prompts = prompts.filter(p => p.id !== id);
+            savePromptsToStorage();
+            render();
+            showToast('Prompt deleted.');
+        }
+        
+        // --- Actions ---
+        function copyPromptToClipboard(prompt) {
+            const textToCopy = `Title: ${prompt.title}\n\nPrompt:\n${prompt.text}\n\nContext:\n${prompt.context || 'N/A'}`;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showToast('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showToast('Failed to copy.', 'error');
+            });
+        }
+        
+        function exportAsTxt() {
+            if (prompts.length === 0) {
+                showToast('No prompts to export.', 'error');
+                return;
+            }
+            const content = prompts.map(p => {
+                return `---
+Title: ${p.title}
+Command: ${p.command || 'N/A'}
+Tags: ${p.tags.join(', ')}
+
+[PROMPT]
+${p.text}
+
+[CONTEXT]
+${p.context || 'N/A'}
+---`;
+            }).join('\n\n');
+            
+            downloadFile(content, 'text/plain', `prompts_export_${new Date().toISOString().split('T')[0]}.txt`);
+        }
+        
+        function backupAsJson() {
+             if (prompts.length === 0) {
+                showToast('No prompts to backup.', 'error');
+                return;
+            }
+            const content = JSON.stringify(prompts, null, 2);
+            downloadFile(content, 'application/json', 'prompts-backup.json');
+        }
+
+        function importFromJson(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedPrompts = JSON.parse(e.target.result);
+                    // Basic validation
+                    if (!Array.isArray(importedPrompts)) {
+                        throw new Error("Invalid format: Not an array.");
+                    }
+                    
+                    showConfirmation('Are you sure you want to overwrite all current prompts? This cannot be undone.', () => {
+                        prompts = importedPrompts;
+                        savePromptsToStorage();
+                        render();
+                        showToast('Prompts imported successfully!');
+                    });
+
+                } catch (error) {
+                    console.error("Import failed:", error);
+                    showToast(`Import failed: ${error.message}`, 'error');
+                } finally {
+                    // Reset file input to allow re-importing the same file
+                    importFileInput.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function downloadFile(content, mimeType, filename) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.backgroundColor = type === 'success' ? 'var(--success-color)' : 'var(--danger-color)';
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // --- Event Listeners ---
+        newPromptBtn.addEventListener('click', openModalForNew);
+        cancelBtn.addEventListener('click', closeModal);
+        promptForm.addEventListener('submit', savePrompt);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderPrompts();
+        });
+        
+        tagList.addEventListener('click', (e) => {
+            if (e.target.tagName === 'LI') {
+                const tag = e.target.dataset.tag;
+                activeTag = tag === 'all' ? null : tag;
+                render();
+            }
+        });
+        
+        exportTxtBtn.addEventListener('click', exportAsTxt);
+        backupJsonBtn.addEventListener('click', backupAsJson);
+        importJsonBtn.addEventListener('click', () => importFileInput.click());
+        importFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                importFromJson(e.target.files[0]);
+            }
+        });
+
+        // Close confirmation modal
+        confirmCancelBtn.addEventListener('click', () => confirmModal.classList.remove('visible'));
+        confirmModal.addEventListener('click', (e) => {
+             if (e.target === confirmModal) confirmModal.classList.remove('visible');
+        });
+
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                if (modal.classList.contains('visible')) {
+                    document.getElementById('save-btn').click();
+                }
+            }
+            if (e.key === 'Escape') {
+                if (modal.classList.contains('visible')) closeModal();
+                if (confirmModal.classList.contains('visible')) confirmModal.classList.remove('visible');
+            }
+        });
+        
+        // --- Initialization ---
+        function init() {
+            prompts = getPromptsFromStorage();
+            render();
+        }
+
+        init();
+    });
+    </script>
+</body>
+</html>
